@@ -23,7 +23,7 @@ typedef int gonsize_t;
 #define VERSION \
     "0.0.0"
 #define DESCRIPTION \
-    ""
+    ""  // TODO: description
 #define AUTHORS \
     "Łukasz Dragon <lukasz.b.dragon@gmail.com>"
 #define LICENSE \

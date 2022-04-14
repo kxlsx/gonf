@@ -6,7 +6,7 @@
 #include <common.h>
 
 // TODO: make code less repetetive
-//TODO: check read/write errors
+// TODO: figure out how to manage those big FREEING SHIT blocks
 
 #define PRINT_ERR_NOMEM { \
     eprintf_gonf("failed to allocate memory.\n"); \
@@ -191,6 +191,7 @@ int process_args(int argc, char **argv){
         }
     }
 
+    /* compile and check results */
     compile_res = compilegonf(infiles, outfile, header_outfile);
     if(compile_res != COMPILEGONF_OK){
         // TODO: FREEING SHIT
@@ -263,7 +264,6 @@ int process_args(int argc, char **argv){
         return ERR_FILE;
     }
 
-    
     // TODO: FREEING SHIT
     if(header_outfile != NULL) fclose(header_outfile);
     fclose(outfile);

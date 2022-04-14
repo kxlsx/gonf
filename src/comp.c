@@ -4,7 +4,6 @@
 #include <parse.h>
 #include <gonf_dump.h>
 
-
 static void compile_gonf_identifiers(struct flagspec *flags, FILE *outfile){
     struct matchnode *idents;
     flagc_t idents_count;

@@ -2,3 +2,4 @@
 src/pre/
 output/
 tests/
+*.gen.c
