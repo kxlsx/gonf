@@ -15,10 +15,11 @@
 
 #define COMPILEGONF_OK          OK
 #define COMPILEGONF_ERR_NOMEM   ERR_NOMEM
+#define COMPILEGONF_ERR_FILE    ERR_FILE
 #define COMPILEGONF_ERR_PARSE   ERR_PARSE
 #define COMPILEGONF_ERR_NOFLAGS ERR_NOFLAGS
 
-int compilegonf(struct infiles *infiles, FILE *outfile, FILE *header_outfile);
+int compilegonf(struct infiles *infiles, char *outfile_name, char *header_outfile_name);
 
 /* ================= */
 #endif

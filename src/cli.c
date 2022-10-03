@@ -7,10 +7,6 @@
 #include <infiles.h>
 #include <comp.h>
 
-
-// TODO: make code less repetetive
-// TODO: figure out how to manage those big FREEING SHIT blocks
-
 #define PRINT_ERR_NOMEM { \
     eprintf_gonf("failed to allocate memory.\n"); \
 }
@@ -58,9 +54,9 @@ struct infiles *infiles_new(char **file_paths, gonsize_t count){
                 fclose(infiles->farr[i]);
             }
             /* free storage */
-            free(infiles);
             free(infiles->farr);
             free(infiles->parr);
+            free(infiles);
             return NULL;
         }
     }
@@ -162,7 +158,6 @@ int process_args(int argc, char **argv){
     gonfc_t arglen;
     struct infiles *infiles;
     char *outfile_name, *header_outfile_name;
-    FILE *outfile, *header_outfile;
     int compile_res;
 
     args_stor = gonfparse(argc, argv);
@@ -196,69 +191,38 @@ int process_args(int argc, char **argv){
     arglen = gonfargc(args);
 
     /* open input files */
-    if(arglen == 0){
-        infiles = infiles_new_stdin();
-    }else{
-        infiles = infiles_new(args, arglen);
-    }
+    infiles = (arglen == 0) ? infiles_new_stdin() : infiles_new(args, arglen);
     if(infiles == NULL){
-        // TODO: FREEING SHIT
         free(args_stor);
         return ERR_FILE;
     }
 
-    /* open output files */
+    /* set output file name */
     outfile_name = gonflag_is_present(gonflag_get(GONFLAG_OUTPUT)) ?
         gonflag_get(GONFLAG_OUTPUT)->value :
         DEFAULT_OUTFILE;
-    if(gonflag_is_present(gonflag_get(GONFLAG_STDOUT))){
-        outfile = stdout;
+    if(gonflag_is_present(gonflag_get(GONFLAG_STDOUT)))
         outfile_name = NULL;
-    }else{
-        outfile = fopen(outfile_name, "w");
-        if(outfile == NULL){
-            PRINT_ERR_FILE(outfile_name);
-            // TODO: FREEING SHIT
-            infiles_free(infiles);
-            free(args_stor);
-            return ERR_FILE;
-        }
-    }
 
     /* open header output file if needed */
-    header_outfile = NULL;
+    header_outfile_name = NULL;
     if(gonflag_is_present(gonflag_get(GONFLAG_HEADER))){
         header_outfile_name = (gonflag_get(GONFLAG_HEADER)->value == NULL) ?
             gonflag_get(GONFLAG_HEADER)->default_value :
             gonflag_get(GONFLAG_HEADER)->value;
-        header_outfile = fopen(header_outfile_name, "w");
-        if(header_outfile == NULL){
-            PRINT_ERR_FILE(header_outfile_name);
-            // TODO: FREEING SHIT
-            fclose(outfile);
-            if(outfile_name != NULL) remove(outfile_name);
-            infiles_free(infiles);
-            free(args_stor);
-            return ERR_FILE;
-        }
     }
 
     /* compile and check results */
-    compile_res = compilegonf(infiles, outfile, header_outfile);
+    compile_res = compilegonf(infiles, outfile_name, header_outfile_name);
     if(compile_res != COMPILEGONF_OK){
-        // TODO: FREEING SHIT
-        if(header_outfile != NULL){
-            fclose(header_outfile);
-            remove(header_outfile_name);
-        }
-        fclose(outfile);
-        if(outfile_name != NULL) remove(outfile_name);
         infiles_free(infiles);
         free(args_stor);
         switch(compile_res){
         case COMPILEGONF_ERR_NOMEM:
             PRINT_ERR_NOMEM;
             return ERR_NOMEM;
+        case COMPILEGONF_ERR_FILE:
+            return ERR_FILE;
         case COMPILEGONF_ERR_PARSE:
             return ERR_PARSE;
         case COMPILEGONF_ERR_NOFLAGS:
@@ -271,50 +235,13 @@ int process_args(int argc, char **argv){
     for(gonfc_t i = 0; i < arglen; i++){
         if(ferror(infiles_get_file(infiles, i)) != 0){
             PRINT_ERR_FILE(args[i]);
-            // TODO: FREEING SHIT
-            if(header_outfile != NULL){
-                fclose(header_outfile);
-                remove(header_outfile_name);
-            }
-            fclose(outfile);
-            if(outfile_name != NULL) remove(outfile_name);
+
             infiles_free(infiles);
             free(args_stor);
             return ERR_FILE;
         }
     }
-    /* check for write errors */
-    if(ferror(outfile) != 0){
-        PRINT_ERR_FILE(outfile_name);
-        // TODO: FREEING SHIT
-        if(header_outfile != NULL){
-            fclose(header_outfile);
-            remove(header_outfile_name);
-        }
-        fclose(outfile);
-        if(outfile_name != NULL) remove(outfile_name);
-        infiles_free(infiles);
-        free(args_stor);
-        return ERR_FILE;
-    }
-    if(header_outfile != NULL
-    && ferror(header_outfile) != 0){
-        PRINT_ERR_FILE(header_outfile_name);
-        // TODO: FREEING SHIT
-        if(header_outfile != NULL){
-            fclose(header_outfile);
-            remove(header_outfile_name);
-        }
-        fclose(outfile);
-        if(outfile_name != NULL) remove(outfile_name);
-        infiles_free(infiles);
-        free(args_stor);
-        return ERR_FILE;
-    }
 
-    // TODO: FREEING SHIT
-    if(header_outfile != NULL) fclose(header_outfile);
-    fclose(outfile);
     infiles_free(infiles);
     free(args_stor);
     return 0;

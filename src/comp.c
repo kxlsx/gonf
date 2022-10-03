@@ -130,8 +130,9 @@ static void compile_library(struct flagspec *flags, FILE *outfile){
     fwrite(gonf_tail_c_dump, 1, gonf_tail_c_dump_len, outfile);
 }
 
-int compilegonf(struct infiles *infiles, FILE *outfile, FILE *header_outfile){
+int compilegonf(struct infiles *infiles, char *outfile_name, char *header_outfile_name){
     struct flagspec *flags;
+    FILE *outfile, *header_outfile;
     
     /* alloc flagspec */
     flags = flagspec_new();
@@ -155,11 +156,68 @@ int compilegonf(struct infiles *infiles, FILE *outfile, FILE *header_outfile){
         return COMPILEGONF_ERR_NOFLAGS;
     }
 
+    /* open outfile */
+    if(outfile_name != NULL){
+        outfile = fopen(outfile_name, "w");
+        if(outfile == NULL){
+            eprintf_gonf();
+            perror(outfile_name);
+
+            flagspec_free(flags);
+            return COMPILEGONF_ERR_FILE;
+        }
+    }else{
+        outfile = stdout;
+    }
+    /* open header outfile */
+    if(header_outfile_name != NULL){
+        header_outfile = fopen(header_outfile_name, "w");
+        if(header_outfile == NULL){
+            eprintf_gonf();
+            perror(header_outfile_name);
+
+            fclose(outfile);
+            remove(outfile_name);
+            flagspec_free(flags);
+            return COMPILEGONF_ERR_FILE;
+        }
+    }
+
     /* compile lib */
     compile_library(flags, outfile);
     /* compile header */
-    if(header_outfile != NULL) compile_header(flags, header_outfile);
+    if(header_outfile_name != NULL) compile_header(flags, header_outfile);
 
+    /* check for write errors */
+    if(ferror(outfile) != 0){
+        eprintf_gonf();
+        perror(outfile_name);
+
+        fclose(outfile);
+        remove(outfile_name);
+        if(header_outfile_name != NULL){
+            fclose(header_outfile);
+            remove(header_outfile_name);
+        }
+        flagspec_free(flags);
+        return COMPILEGONF_ERR_FILE;
+    }
+    if(header_outfile_name != NULL 
+    && ferror(header_outfile) != 0){
+        eprintf_gonf();
+        perror(outfile_name);
+
+        remove(outfile_name);
+        if(header_outfile_name != NULL){
+            fclose(header_outfile);
+            remove(header_outfile_name);
+        }
+        flagspec_free(flags);
+        return COMPILEGONF_ERR_FILE;
+    }
+
+    fclose(outfile);
+    if(header_outfile_name != NULL) fclose(header_outfile);
     flagspec_free(flags);
     return COMPILEGONF_OK;
 }

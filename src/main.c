@@ -4,7 +4,7 @@
 // TODO: error test flag parser parser
 // TODO: DOCUMENT SHIT
 // TODO: handle SIGINT and stuff
-// TODO: rewrite comp.c
+// TODO: handle passed directories
 
 int process_args(int argc, char **argv);
 int main(int argc, char **argv){
