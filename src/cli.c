@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
+#include <sys/stat.h> //TODO: check if works on windows
 
 #include <common.h>
 #include <gonf.h>
@@ -22,7 +24,22 @@
     gonferror_print(); \
 }
 
-struct infiles *infiles_new(char **file_paths, gonsize_t count){
+void infiles_free(struct infiles *infiles){
+    for(gonsize_t i = 0; i < infiles->len; i++){
+        fclose(infiles->farr[i]);
+    }
+    free(infiles->farr);
+    free(infiles->parr);
+    free(infiles);
+}
+
+static bool isdir(char *path){
+    struct stat path_stat;
+    stat(path, &path_stat);
+    return S_ISDIR(path_stat.st_mode);
+}
+
+static struct infiles *infiles_new(char **file_paths, gonsize_t count){
     struct infiles *infiles;
 
     infiles = malloc(sizeof(struct infiles));
@@ -45,6 +62,13 @@ struct infiles *infiles_new(char **file_paths, gonsize_t count){
     /* open files */
     for(gonsize_t i = 0; i < count; i++){
         infiles->farr[i] = fopen(infiles->parr[i], "r");
+        /* check if is a directory */
+        if(isdir(infiles->parr[i])){
+            errno = EISDIR;
+            fclose(infiles->farr[i]);
+            infiles->farr[i] = NULL;
+        }
+        /* check if file is opened */
         if(infiles->farr[i] == NULL){
             PRINT_ERR_FILE(infiles->parr[i]);
 
@@ -64,7 +88,7 @@ struct infiles *infiles_new(char **file_paths, gonsize_t count){
     return infiles;
 }
 
-struct infiles *infiles_new_stdin(){
+static struct infiles *infiles_new_stdin(){
     struct infiles *infiles;
 
     infiles = malloc(sizeof(struct infiles));
@@ -87,16 +111,6 @@ struct infiles *infiles_new_stdin(){
     
     return infiles;
 }
-
-void infiles_free(struct infiles *infiles){
-    for(gonsize_t i = 0; i < infiles->len; i++){
-        fclose(infiles->farr[i]);
-    }
-    free(infiles->farr);
-    free(infiles->parr);
-    free(infiles);
-}
-
 
 static void print_help(void){
     struct gonflag *flag;
