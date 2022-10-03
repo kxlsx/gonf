@@ -33,12 +33,16 @@ void infiles_free(struct infiles *infiles){
     free(infiles);
 }
 
+/* Check if the provided path points to a directory */
 static bool isdir(char *path){
     struct stat path_stat;
     stat(path, &path_stat);
     return S_ISDIR(path_stat.st_mode);
 }
 
+/* Create a new infiles struct, opening every file in file_path.
+ * On error, writes to stderr and returns NULL.
+ */
 static struct infiles *infiles_new(char **file_paths, gonsize_t count){
     struct infiles *infiles;
 
@@ -88,6 +92,9 @@ static struct infiles *infiles_new(char **file_paths, gonsize_t count){
     return infiles;
 }
 
+/* Create a new infiles struct containing just stdin
+ * On error, writes to stderr and returns NULL.
+ */
 static struct infiles *infiles_new_stdin(){
     struct infiles *infiles;
 
@@ -169,13 +176,15 @@ static void print_version(void){
 
 int process_args(int argc, char **argv){
     char **args_stor, **args;
-    gonfc_t arglen;
+    gonfc_t argslen;
     struct infiles *infiles;
     char *outfile_name, *header_outfile_name;
     int compile_res;
 
+    /* read flags and arguments from argv */
     args_stor = gonfparse(argc, argv);
     args = args_stor + 1;
+    argslen = gonfargc(args);
     if(gonferror() != GONFOK){
         if(gonferror() == GONFERR_NOMEM) {
             PRINT_ERR_NOMEM;
@@ -186,6 +195,7 @@ int process_args(int argc, char **argv){
         return ERR_CLI;
     }
 
+    /* print information if requested */
     if(gonflag_is_present(gonflag_get(GONFLAG_HELP))){
         print_help();
         free(args_stor);
@@ -202,10 +212,8 @@ int process_args(int argc, char **argv){
         return OK;
     }
 
-    arglen = gonfargc(args);
-
     /* open input files */
-    infiles = (arglen == 0) ? infiles_new_stdin() : infiles_new(args, arglen);
+    infiles = (argslen == 0) ? infiles_new_stdin() : infiles_new(args, argslen);
     if(infiles == NULL){
         free(args_stor);
         return ERR_FILE;
@@ -218,7 +226,7 @@ int process_args(int argc, char **argv){
     if(gonflag_is_present(gonflag_get(GONFLAG_STDOUT)))
         outfile_name = NULL;
 
-    /* open header output file if needed */
+    /* set header output file name if needed */
     header_outfile_name = NULL;
     if(gonflag_is_present(gonflag_get(GONFLAG_HEADER))){
         header_outfile_name = (gonflag_get(GONFLAG_HEADER)->value == NULL) ?
@@ -246,7 +254,7 @@ int process_args(int argc, char **argv){
     }
 
     /* check for read errors */
-    for(gonfc_t i = 0; i < arglen; i++){
+    for(gonfc_t i = 0; i < argslen; i++){
         if(ferror(infiles_get_file(infiles, i)) != 0){
             PRINT_ERR_FILE(args[i]);
 

@@ -5,6 +5,7 @@
 
 #define MATCHLIST_SIZE_INIT 8
 
+/* Restore the pointers inside the matchlist. */
 static void matchlist_restore(struct matchlist *list){
     matchc_t last;
 

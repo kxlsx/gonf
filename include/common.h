@@ -8,6 +8,7 @@
 
 typedef int gonsize_t;
 
+/* Return values. */
 #define OK          0
 #define ERR_NOMEM   1
 #define ERR_PARSE   2
@@ -23,7 +24,7 @@ typedef int gonsize_t;
 #define VERSION \
     "0.0.0"
 #define DESCRIPTION \
-    ""  // TODO: description
+    "Generate programs that parse command line flags."  // TODO: description
 #define AUTHORS \
     "Łukasz Dragon <lukasz.b.dragon@gmail.com>"
 #define LICENSE \

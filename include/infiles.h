@@ -26,6 +26,7 @@ struct infiles{
 #define infiles_len(infiles) \
     (infiles->len)
 
+/* Close the infiles and free the struct */
 void infiles_free(struct infiles *infiles);
 
 /* ================= */

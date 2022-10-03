@@ -10,6 +10,7 @@
 #include <common.h>
 #endif
 
+/* Return values. */
 #define MATCHLIST_OK     OK
 #define MATCHLIST_NOMEM  ERR_NOMEM
 

@@ -8,6 +8,7 @@
 #include <common.h>
 #include <infiles.h>
 
+/* flagspec eturn values. */
 #define FLAGSPEC_OK    0
 #define FLAGSPEC_NOMEM 1
 #define FLAGSPEC_EXIST 2
@@ -131,6 +132,7 @@ enum parsegonf_state{
     PGF_DIE,
 };
 
+/* Formats for each token when printing error messages. */
 #define PARSEGONF_ERR_FMT_IDN "%s:"
 #define PARSEGONF_ERR_FMT_SHR "-%c"
 #define PARSEGONF_ERR_FMT_LNG "--%s"
@@ -317,21 +319,24 @@ PARSEGONF_STATE_FN_DEFINE(END,
 int parsegonf(struct infiles *infiles, struct flagspec *flags){
     enum parsegonf_state state;
     enum lexgonf_token token;
+    char *inpath;
     bool is_err;
 
     is_err = false;
-   
     for(gonsize_t i = 0; i < infiles_len(infiles); i++){
+        /* pass the current infile to the lexer */
         lexgonf_set_in(infiles_get_file(infiles, i));
+        inpath = infiles_get_path(infiles, i);
 
+        /* main parse loop */
         state = PGF_BEG;
         while((token = lexgonf()) != LGF_END){
             switch(state){
-            case PGF_BEG: state = parsegonf_state_BEG(token, flags, infiles_get_path(infiles, i));  break;
-            case PGF_NAM: state = parsegonf_state_NAM(token, flags, infiles_get_path(infiles, i));  break;
-            case PGF_STR: state = parsegonf_state_STR(token, flags, infiles_get_path(infiles, i));  break;
-            case PGF_VAL: state = parsegonf_state_VAL(token, flags, infiles_get_path(infiles, i));  break;
-            case PGF_END: state = parsegonf_state_END(token, flags, infiles_get_path(infiles, i));  break;
+            case PGF_BEG: state = parsegonf_state_BEG(token, flags, inpath);  break;
+            case PGF_NAM: state = parsegonf_state_NAM(token, flags, inpath);  break;
+            case PGF_STR: state = parsegonf_state_STR(token, flags, inpath);  break;
+            case PGF_VAL: state = parsegonf_state_VAL(token, flags, inpath);  break;
+            case PGF_END: state = parsegonf_state_END(token, flags, inpath);  break;
             case PGF_ERR:
                 /* advance until the next SEP or until END */
                 while(token != LGF_END && token != LGF_SEP) token = lexgonf();
@@ -348,6 +353,7 @@ int parsegonf(struct infiles *infiles, struct flagspec *flags){
                 return PARSEGONF_ERR_NOMEM;
             }
         }
+        /* cleanup after parsing a file. */
         switch(state){
         case PGF_BEG: break;
         case PGF_ERR: is_err = true; break;

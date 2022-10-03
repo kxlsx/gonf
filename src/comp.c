@@ -5,6 +5,12 @@
 #include <parse.h>
 #include <gonf_dump.h>
 
+/* Compile identifier macros.
+ *
+ * EXAMPLE_OUTPUT:
+ *  #define GONFLAG_INDEX(IDENTIFIER) GONFLAG_##IDENTIFIER
+ *  #define GONFLAG_SAMPLE 0
+ */
 static void compile_gonf_identifiers(struct flagspec *flags, FILE *outfile){
     struct matchnode *idents;
     flagc_t idents_count;
@@ -22,10 +28,12 @@ static void compile_gonf_identifiers(struct flagspec *flags, FILE *outfile){
     }
 }
 
+/* Compile the GONFLAGC macro. */
 static void compile_gonflagc(flagc_t flagspec_len, FILE *outfile){
     fprintf(outfile, "\n#define GONFLAGC %d\n\n", flagspec_len);
 }
 
+/* Compile the flagspec into a C library header in outfile. */
 static void compile_header(struct flagspec *flags, FILE *outfile){
     fwrite(gonf_head_h_dump, 1, gonf_head_h_dump_len, outfile);
 
@@ -35,6 +43,10 @@ static void compile_header(struct flagspec *flags, FILE *outfile){
     fwrite(gonf_tail_h_dump, 1, gonf_tail_h_dump_len, outfile);
 }
 
+/* Compile a multiline string into C format,
+ * replacing control chars with their corresponding 
+ * representations.
+ */
 static void compile_multiline_str(char *str, FILE *outfile){
     char c;
     putc('\"', outfile);
@@ -51,6 +63,13 @@ static void compile_multiline_str(char *str, FILE *outfile){
     fputs("\", ", outfile);
 }
 
+/* Compile the gonf_flags struct.
+ *
+ * EXAMPLE OUTPUT:
+ * static struct gonflag gonf_flags[GONFLAGC] = {
+ *  {"value", NULL, "sample", "sample", 0, 'g', true},
+ * };
+ */
 static void compile_gonf_flags(struct flagspec *flags, FILE *outfile){
     struct flaginfo flag;
 
@@ -81,6 +100,13 @@ static void compile_gonf_flags(struct flagspec *flags, FILE *outfile){
     fputs("};\n\n", outfile);
 }
 
+/* Compile the gonf_flags_by_short struct.
+ *
+ * EXAMPLE OUTPUT:
+ * static const gonfc_t gonf_flags_by_short[93] = {
+ *  [4] = 1,
+ * };
+ */
 static void compile_gonf_flags_by_short(struct flagspec *flags, FILE *outfile){
     flagc_t shortn;
 
@@ -94,6 +120,13 @@ static void compile_gonf_flags_by_short(struct flagspec *flags, FILE *outfile){
     fputs("};\n\n", outfile);
 }
 
+/* Compile the gonf_flags_by_long struct.
+ *
+ * EXAMPLE OUTPUT:
+ * static struct gonf_matchlist gonf_flags_by_long[GONFLAGC] = {
+ *  {0, "sample", gonf_flags_by_long},
+ * };
+ */
 static void compile_gonf_flags_by_long(struct flagspec *flags, FILE *outfile){
     struct matchnode *longs;
     flagc_t longs_last;
@@ -118,7 +151,9 @@ static void compile_gonf_flags_by_long(struct flagspec *flags, FILE *outfile){
     );
 }
 
+/* Compile the flagspec into a C library in outfile */
 static void compile_library(struct flagspec *flags, FILE *outfile){
+    /* write header */
     fwrite(gonf_head_c_dump, 1, gonf_head_c_dump_len, outfile);
 
     compile_gonflagc(flagspec_len(flags), outfile);
@@ -127,6 +162,7 @@ static void compile_library(struct flagspec *flags, FILE *outfile){
     compile_gonf_flags_by_short(flags, outfile);
     compile_gonf_flags_by_long(flags, outfile);
 
+    /* write tail */
     fwrite(gonf_tail_c_dump, 1, gonf_tail_c_dump_len, outfile);
 }
 

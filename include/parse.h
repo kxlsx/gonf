@@ -16,6 +16,7 @@
 #include <infiles.h>
 #endif
 
+/* Return values. */
 #define PARSEGONF_OK        OK
 #define PARSEGONF_ERR_NOMEM ERR_NOMEM
 #define PARSEGONF_ERR_PARSE ERR_PARSE
@@ -66,7 +67,7 @@ void flagspec_free(struct flagspec *spec);
 #define flagspec_len(spec) \
     spec->last
 
-/* Try to parse the given gonf spec file
+/* Try to parse the given gonf spec files
  * into the passed flagspec structure.
  * 
  * RETURNS:
