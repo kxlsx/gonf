@@ -12,6 +12,9 @@
 #ifndef _COMMON_H
 #include <common.h>
 #endif
+#ifndef _INFILES_H
+#include <infiles.h>
+#endif
 
 #define PARSEGONF_OK        OK
 #define PARSEGONF_ERR_NOMEM ERR_NOMEM
@@ -78,7 +81,7 @@ void flagspec_free(struct flagspec *spec);
  *  When a malloc failure occurs, the function will terminate
  *  immediately with PARSEGONF_ERR_NOMEM.
  */
-int parsegonf(FILE *infile, struct flagspec *spec);
+int parsegonf(struct infiles *infiles, struct flagspec *spec);
 
 /* ================= */
 #endif

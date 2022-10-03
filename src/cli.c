@@ -1,9 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
-#include <gonf.h>
-#include <comp.h>
 #include <common.h>
+#include <gonf.h>
+#include <infiles.h>
+#include <comp.h>
+
 
 // TODO: make code less repetetive
 // TODO: figure out how to manage those big FREEING SHIT blocks
@@ -22,6 +25,82 @@
     eprintf_gonf(); \
     gonferror_print(); \
 }
+
+struct infiles *infiles_new(char **file_paths, gonsize_t count){
+    struct infiles *infiles;
+
+    infiles = malloc(sizeof(struct infiles));
+    if(infiles == NULL){
+        PRINT_ERR_NOMEM;
+        return NULL;
+    }
+
+    infiles->farr = malloc(count * sizeof(FILE *));
+    infiles->parr = malloc(count * sizeof(char *));
+    if(infiles->farr == NULL || infiles->parr == NULL){
+        PRINT_ERR_NOMEM;
+        free(infiles);
+        return NULL;
+    }
+    infiles->len = count;
+
+    /* copy file paths */
+    memcpy(infiles->parr, file_paths, count * sizeof(char *));
+    /* open files */
+    for(gonsize_t i = 0; i < count; i++){
+        infiles->farr[i] = fopen(infiles->parr[i], "r");
+        if(infiles->farr[i] == NULL){
+            PRINT_ERR_FILE(infiles->parr[i]);
+
+            /* close previously opened files */            
+            while(i != 0){
+                i--;
+                fclose(infiles->farr[i]);
+            }
+            /* free storage */
+            free(infiles);
+            free(infiles->farr);
+            free(infiles->parr);
+            return NULL;
+        }
+    }
+
+    return infiles;
+}
+
+struct infiles *infiles_new_stdin(){
+    struct infiles *infiles;
+
+    infiles = malloc(sizeof(struct infiles));
+    if(infiles == NULL){
+        PRINT_ERR_NOMEM;
+        return NULL;
+    }
+
+    infiles->farr = malloc(sizeof(FILE *));
+    infiles->parr = malloc(sizeof(char *));
+    if(infiles->farr == NULL || infiles->parr == NULL){
+        PRINT_ERR_NOMEM;
+        free(infiles);
+        return NULL;
+    }
+    infiles->len = 1;
+
+    infiles->farr[0] = stdin;
+    infiles->parr[0] = "stdin";
+    
+    return infiles;
+}
+
+void infiles_free(struct infiles *infiles){
+    for(gonsize_t i = 0; i < infiles->len; i++){
+        fclose(infiles->farr[i]);
+    }
+    free(infiles->farr);
+    free(infiles->parr);
+    free(infiles);
+}
+
 
 static void print_help(void){
     struct gonflag *flag;
@@ -78,14 +157,10 @@ static void print_version(void){
     );
 }
 
-static void fclose_infiles(FILE **infiles){
-    while(*infiles != NULL) fclose(*(infiles++));
-}
-
 int process_args(int argc, char **argv){
     char **args_stor, **args;
     gonfc_t arglen;
-    FILE **infiles;
+    struct infiles *infiles;
     char *outfile_name, *header_outfile_name;
     FILE *outfile, *header_outfile;
     int compile_res;
@@ -122,35 +197,14 @@ int process_args(int argc, char **argv){
 
     /* open input files */
     if(arglen == 0){
-        infiles = malloc(2 * sizeof(FILE *));
-        if(infiles == NULL){
-            PRINT_ERR_NOMEM;
-            free(args_stor);
-            return ERR_NOMEM;
-        }
-
-        infiles[0] = stdin;
-        infiles[1] = NULL;
+        infiles = infiles_new_stdin();
     }else{
-        infiles = malloc((arglen + 1) * sizeof(FILE *));
-        if(infiles == NULL){
-            PRINT_ERR_NOMEM;
-            free(args_stor);
-            return ERR_NOMEM;
-        }
-
-        for(gonfc_t i = 0; i < arglen; i++){
-            infiles[i] = fopen(args[i], "r");
-            if(infiles[i] == NULL){
-                PRINT_ERR_FILE(args[i]);
-                // TODO: FREEING SHIT
-                fclose_infiles(infiles);
-                free(infiles);
-                free(args_stor);
-                return ERR_FILE;
-            }
-        }
-        infiles[arglen] = NULL;
+        infiles = infiles_new(args, arglen);
+    }
+    if(infiles == NULL){
+        // TODO: FREEING SHIT
+        free(args_stor);
+        return ERR_FILE;
     }
 
     /* open output files */
@@ -165,8 +219,7 @@ int process_args(int argc, char **argv){
         if(outfile == NULL){
             PRINT_ERR_FILE(outfile_name);
             // TODO: FREEING SHIT
-            fclose_infiles(infiles);
-            free(infiles);
+            infiles_free(infiles);
             free(args_stor);
             return ERR_FILE;
         }
@@ -184,8 +237,7 @@ int process_args(int argc, char **argv){
             // TODO: FREEING SHIT
             fclose(outfile);
             if(outfile_name != NULL) remove(outfile_name);
-            fclose_infiles(infiles);
-            free(infiles);
+            infiles_free(infiles);
             free(args_stor);
             return ERR_FILE;
         }
@@ -201,8 +253,7 @@ int process_args(int argc, char **argv){
         }
         fclose(outfile);
         if(outfile_name != NULL) remove(outfile_name);
-        fclose_infiles(infiles);
-        free(infiles);
+        infiles_free(infiles);
         free(args_stor);
         switch(compile_res){
         case COMPILEGONF_ERR_NOMEM:
@@ -218,7 +269,7 @@ int process_args(int argc, char **argv){
 
     /* check for read errors */
     for(gonfc_t i = 0; i < arglen; i++){
-        if(ferror(infiles[i]) != 0){
+        if(ferror(infiles_get_file(infiles, i)) != 0){
             PRINT_ERR_FILE(args[i]);
             // TODO: FREEING SHIT
             if(header_outfile != NULL){
@@ -227,8 +278,7 @@ int process_args(int argc, char **argv){
             }
             fclose(outfile);
             if(outfile_name != NULL) remove(outfile_name);
-            fclose_infiles(infiles);
-            free(infiles);
+            infiles_free(infiles);
             free(args_stor);
             return ERR_FILE;
         }
@@ -243,8 +293,7 @@ int process_args(int argc, char **argv){
         }
         fclose(outfile);
         if(outfile_name != NULL) remove(outfile_name);
-        fclose_infiles(infiles);
-        free(infiles);
+        infiles_free(infiles);
         free(args_stor);
         return ERR_FILE;
     }
@@ -258,8 +307,7 @@ int process_args(int argc, char **argv){
         }
         fclose(outfile);
         if(outfile_name != NULL) remove(outfile_name);
-        fclose_infiles(infiles);
-        free(infiles);
+        infiles_free(infiles);
         free(args_stor);
         return ERR_FILE;
     }
@@ -267,8 +315,7 @@ int process_args(int argc, char **argv){
     // TODO: FREEING SHIT
     if(header_outfile != NULL) fclose(header_outfile);
     fclose(outfile);
-    fclose_infiles(infiles);
-    free(infiles);
+    infiles_free(infiles);
     free(args_stor);
     return 0;
 }

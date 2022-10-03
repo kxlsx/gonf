@@ -2,7 +2,6 @@
 // TODO: maybe do configurable prefix?
 // TODO: error test flag parser
 // TODO: error test flag parser parser
-// TODO: pass FILES ** to lexer and parser?
 // TODO: DOCUMENT SHIT
 // TODO: handle SIGINT and stuff
 // TODO: rewrite comp.c

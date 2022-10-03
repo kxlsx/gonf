@@ -6,6 +6,7 @@
 #include <lex.h>
 #include <matchlist.h>
 #include <common.h>
+#include <infiles.h>
 
 #define FLAGSPEC_OK    0
 #define FLAGSPEC_NOMEM 1
@@ -138,7 +139,7 @@ enum parsegonf_state{
 
 /* Print error, set the state to ERR and continue */
 #define PARSEGONF_THROW_ERR(TOKENFMT, TOKEN, FMT, ...) { \
-    eprintf_gonf("parse error [%d:%d] ("TOKENFMT "): " FMT, lexgonf_lineno, lexgonf_colno, TOKEN, ## __VA_ARGS__); \
+    eprintf_gonf("%s [%d:%d]: \""TOKENFMT "\": " FMT, infilename, lexgonf_lineno, lexgonf_colno, TOKEN, ## __VA_ARGS__); \
     return PGF_ERR; \
 }
 #define PARSEGONF_THROW_ERR_EXIST(TOKENFMT, TOKEN, FIELD) \
@@ -207,7 +208,7 @@ enum parsegonf_state{
  * switch statement on the passed token.
  */
 #define PARSEGONF_STATE_FN_DEFINE(STATE, ON_IDN, ON_SHR, ON_LNG, ON_SEP, ON_STR, ON_ISV) \
-    enum parsegonf_state parsegonf_state_##STATE(enum lexgonf_token token, struct flagspec *flags){ \
+    enum parsegonf_state parsegonf_state_##STATE(enum lexgonf_token token, struct flagspec *flags, char *infilename){ \
         switch(token){ \
         case LGF_IDN: \
             ON_IDN \
@@ -313,53 +314,55 @@ PARSEGONF_STATE_FN_DEFINE(END,
     PARSEGONF_THROW_ERR_EXPECT(PARSEGONF_ERR_FMT_C, lexgonf_lval.c, "separator", "value sign");
 )
 
-int parsegonf(FILE *infile, struct flagspec *flags){
+int parsegonf(struct infiles *infiles, struct flagspec *flags){
     enum parsegonf_state state;
     enum lexgonf_token token;
     bool is_err;
 
-    /* set lexer's input file */
-    lexgonf_set_in(infile);
-
     is_err = false;
-    state = PGF_BEG;
-    while((token = lexgonf()) != LGF_END){
+   
+    for(gonsize_t i = 0; i < infiles_len(infiles); i++){
+        lexgonf_set_in(infiles_get_file(infiles, i));
+
+        state = PGF_BEG;
+        while((token = lexgonf()) != LGF_END){
+            switch(state){
+            case PGF_BEG: state = parsegonf_state_BEG(token, flags, infiles_get_path(infiles, i));  break;
+            case PGF_NAM: state = parsegonf_state_NAM(token, flags, infiles_get_path(infiles, i));  break;
+            case PGF_STR: state = parsegonf_state_STR(token, flags, infiles_get_path(infiles, i));  break;
+            case PGF_VAL: state = parsegonf_state_VAL(token, flags, infiles_get_path(infiles, i));  break;
+            case PGF_END: state = parsegonf_state_END(token, flags, infiles_get_path(infiles, i));  break;
+            case PGF_ERR:
+                /* advance until the next SEP or until END */
+                while(token != LGF_END && token != LGF_SEP) token = lexgonf();
+                
+                if(flagspec_next(flags) != FLAGSPEC_OK){
+                    lexgonf_free();
+                    return PARSEGONF_ERR_NOMEM;
+                }
+                is_err = true;
+                state = PGF_BEG;
+                break;
+            case PGF_DIE:
+                lexgonf_free();
+                return PARSEGONF_ERR_NOMEM;
+            }
+        }
         switch(state){
-        case PGF_BEG: state = parsegonf_state_BEG(token, flags);  break;
-        case PGF_NAM: state = parsegonf_state_NAM(token, flags);  break;
-        case PGF_STR: state = parsegonf_state_STR(token, flags);  break;
-        case PGF_VAL: state = parsegonf_state_VAL(token, flags);  break;
-        case PGF_END: state = parsegonf_state_END(token, flags);  break;
-        case PGF_ERR:
-            /* advance until the next SEP or until END */
-            while(token != LGF_END && token != LGF_SEP) token = lexgonf();
+        case PGF_BEG: break;
+        case PGF_ERR: is_err = true; break;
+        case PGF_DIE:
+            lexgonf_free();
+            return PARSEGONF_ERR_NOMEM;
+        default:
+            /* dump the last flaginfo */
             if(flagspec_next(flags) != FLAGSPEC_OK){
                 lexgonf_free();
                 return PARSEGONF_ERR_NOMEM;
             }
-            is_err = true;
-            state = PGF_BEG;
             break;
-        case PGF_DIE:
-            lexgonf_free();
-            return PARSEGONF_ERR_NOMEM;
         }
     }
-    switch(state){
-    case PGF_BEG: break;
-    case PGF_ERR: is_err = true; break;
-    case PGF_DIE:
-        lexgonf_free();
-        return PARSEGONF_ERR_NOMEM;
-    default:
-        /* dump the last flaginfo */
-        if(flagspec_next(flags) != FLAGSPEC_OK){
-            lexgonf_free();
-            return PARSEGONF_ERR_NOMEM;
-        }
-        break;
-    }
-
     /* destroy the lexer */
     lexgonf_free();
     

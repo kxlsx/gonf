@@ -1,6 +1,7 @@
 #include <stdio.h>
 
 #include <comp.h>
+#include <infiles.h>
 #include <parse.h>
 #include <gonf_dump.h>
 
@@ -129,32 +130,23 @@ static void compile_library(struct flagspec *flags, FILE *outfile){
     fwrite(gonf_tail_c_dump, 1, gonf_tail_c_dump_len, outfile);
 }
 
-int compilegonf(FILE **infiles, FILE *outfile, FILE *header_outfile){
+int compilegonf(struct infiles *infiles, FILE *outfile, FILE *header_outfile){
     struct flagspec *flags;
-    bool is_err;
-
+    
     /* alloc flagspec */
     flags = flagspec_new();
     if(flags == NULL)
         return COMPILEGONF_ERR_NOMEM;
 
     /* parse infiles */
-    is_err = false;
-    while(*infiles != NULL){
-        switch(parsegonf(*infiles, flags)){
+    switch(parsegonf(infiles, flags)){
         case PARSEGONF_ERR_NOMEM:
             flagspec_free(flags);
             return COMPILEGONF_ERR_NOMEM;
         case PARSEGONF_ERR_PARSE:
-            is_err = true;
-            break;
+            flagspec_free(flags);
+            return COMPILEGONF_ERR_PARSE;
         default: break;
-        }
-        infiles++;
-    }
-    if(is_err){
-        flagspec_free(flags);
-        return COMPILEGONF_ERR_PARSE;
     }
 
     /* check whether flagspec is not empty */

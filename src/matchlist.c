@@ -41,10 +41,11 @@ int matchlist_append(struct matchlist *list, char *match, matchc_t index){
 
     if(list->len == list->size){
         list->size *= 2;
-        tmp = realloc(list->matches, list->size);
+        tmp = realloc(list->matches, list->size * sizeof(struct matchnode));
         if(tmp == NULL) return MATCHLIST_NOMEM;
 
-        list->matches = tmp;    
+        list->matches = tmp;
+        matchlist_restore(list);
     }
 
     tmp = list->matches + list->len;

@@ -62,7 +62,7 @@ STR \"(\\.|[^\0"\\])*\"
 
 \/\/.*\n             LINE_NEXT(1);
 
-\n+         LINE_NEXT(yyleng);
+\n+                  LINE_NEXT(yyleng);
 [ \t\r\f]+
 
 
@@ -134,5 +134,7 @@ void lexgonf_free(void){
 }
 
 void lexgonf_set_in(FILE *in){
+    lexgonf_next_lineno = 1;
+    lexgonf_next_colno = 1;
     yyin = in;
 }
