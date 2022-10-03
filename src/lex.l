@@ -41,7 +41,7 @@ static lexsize_t lexgonf_next_colno = 1;
 SEP ;
 ISV =
 
-IDN [[:alpha:]_][[:alnum:]_]*
+IDN [[:alnum:]_]+
 
 SHR_PREFIX -
 LNG_PREFIX -

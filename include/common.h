@@ -22,9 +22,9 @@ typedef int gonsize_t;
 #define NAME \
     "gonf"
 #define VERSION \
-    "0.0.0"
+    "0.0.1"
 #define DESCRIPTION \
-    "Generate programs that parse command line flags."  // TODO: description
+    "Generate programs that parse command line flags."
 #define AUTHORS \
     "Łukasz Dragon <lukasz.b.dragon@gmail.com>"
 #define LICENSE \
