@@ -1,0 +1,34 @@
+LICENSE: -L --license "Print license information.";
+
+VERSION: -V --version "Print version.";
+
+HELP:    -h --help    "Print this message.";
+
+CHAR:-c--charset"Change the available charset.
+	Charsets:
+		all      -> Every printable char
+		alnum    -> Letters and digits
+		alpha    -> Letters
+		notalpha -> Digits and special chars
+		lower    -> Lowercase letters
+		upper    -> Uppercase letters
+		digits   -> Digits
+		punct    -> Special chars"
+="all";
+
+LEN:
+-l --length
+"Set the length of generated phrases."
+= "16";
+
+NUM:-n--number"Set the number of phrases to generate."="1";
+
+SEP:
+-s --separator
+"Change the separator between phrases.
+	Separators:
+		newline
+		space
+		tab
+		vtab"
+= "newline";

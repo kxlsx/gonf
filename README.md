@@ -59,8 +59,8 @@ IDENTIFIER: -SHORTNAME --LONGNAME "DESCRIPTION" = "DEFAULT_VALUE";
 ```
 where:
 * `IDENTIFIER` is a alphanumeric string.
-* `SHORTNAME` is any character except `';"=-'`.
-* `LONGNAME` is a `SHORTNAME` followed by any string of characters except `';"='`.
+* `SHORTNAME` is any ASCII character except `';"=-'\`.
+* `LONGNAME` is a `SHORTNAME` followed by any string of characters except `';"='\`.
 * `DESCRIPTION` is any string of characters except `NUL`.
 * `DEFAULT_VALUE` is any string of characters except `NUL` *(has to be preceded by `'='`)*.
 
@@ -84,14 +84,13 @@ and where every part is optional except `SHORTNAME` or `LONGNAME`
 <STRING> ::= ; any string of characters (except NUL) enclosed in double quotes
 ```
 
-<u>The `IDENTIFIER`, `SHORTNAME` and `LONGNAME` **must** be unique.</u>
+The `IDENTIFIER`, `SHORTNAME` and `LONGNAME` **must** be unique.
 
 C-style comments can also be used:
  - `//` for single-line, 
  - `/* */` for multiline.
 
 Whitespace outside double quotes is completely ignored.
-
 
 ### Writing a gonf spec file:
 
@@ -155,13 +154,15 @@ and returning an array of non-flag arguments.
 
 Every flag is represented by `gonflag` struct containing fields
 such as:
- * shortname
- * longname
- * description
- * is_value
- * default_value
- * value
- * count
+```c
+char shortname;
+char *longname;
+char *description;
+bool is_value;
+char *default_value;
+char *value;
+gonfc_t count;
+```
 
 In order to then access a specific flag, 
 one needs to use the `gonflag_get` functions.
@@ -171,18 +172,22 @@ Specific flags can be obtained by passing their:
  * shortname *(`gonflag_get_by_short`)*
  * longname *(`gonflag_get_by_long`)*
 
-Every function and macro is listed and explained in the
-*(optional)* generated header.
+Additional documentation as well as helper macros 
+are provided in the *(optional)* generated header file.
 
 ### Example
 ```c
+/* include the header file */
+#include <gonf.h>
+
+char **args;
 /* parse flags */
 args = gonfparse(argc, argv);
 /* check for errors */
 if(gonferror() != GONFOK){
     free(args);
     gonferror_print();
-    return ERR_CLI;
+    return -1;
 }
 
 struct gonflag *flag;
@@ -194,16 +199,15 @@ printf("%s\n", flag->longname);
 printf("%s\n", flag->description);
 
 /* Print a flag's value. */
-flag = gonflag_get(GONFLAG_OUTPUT);
-if(gonflag_is_present(flag))
+flag = gonflag_get(GONFLAG_INDEX(OUTPUT));
+if(flag->count)
     printf("%s\n", flag->value);
 
-/* Print a flag's value and default value. */
-flag = gonflag_get(GONFLAG_INDEX(MCFLUNGUS));
-printf("%c\n", flag->default_value);
-if(gonflag_is_present(flag))
-    printf("%s\n", flag->value);
-
+/* Print a flag's value using helper macros
+ * (will be set to default value if none was provided).
+ */
+if(gonflag_is_present(GONFLAG_MCFLUNGUS))
+    printf("%s\n", gonflag_get_field(GONFLAG_MCFLUNGUS, value));
 ```
 
 ## Contributing

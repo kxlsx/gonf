@@ -103,14 +103,14 @@ static void compile_gonf_flags(struct flagspec *flags, FILE *outfile){
 /* Compile the gonf_flags_by_short struct.
  *
  * EXAMPLE OUTPUT:
- * static const gonfc_t gonf_flags_by_short[93] = {
+ * static const gonfc_t gonf_flags_by_short[94] = {
  *  [4] = 1,
  * };
  */
 static void compile_gonf_flags_by_short(struct flagspec *flags, FILE *outfile){
     flagc_t shortn;
 
-    fputs("static const gonfc_t gonf_flags_by_short[93] = {\n", outfile);\
+    fputs("static const gonfc_t gonf_flags_by_short["XSTR(FLAGSHORT_MAX)"] = {\n", outfile);\
     for(flagc_t i = 0; i < FLAGSHORT_MAX; i++){
         shortn = flags->shortindex[i];
         if(shortn != 0){

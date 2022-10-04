@@ -1,0 +1,15 @@
+-L --license "Print license";
+
+-V --version "Print version";
+
+-d --decompress "Decompress [FILES] with the .hfc suffix";
+
+-h --help "Print help information";
+
+-n --no-overwrite "Do not overwrite files";
+
+-r --replace "Remove [FILES] upon completion";
+
+-s --stdout "Write results to stdout";
+
+-t --time "Print the time it took to finish";

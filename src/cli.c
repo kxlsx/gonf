@@ -19,6 +19,9 @@
 #define PRINT_ERR_NOFLAGS { \
     eprintf_gonf("input files contain zero flags.\n"); \
 }
+#define PRINT_ERR_UNIQ { \
+    eprintf_gonf("output and header-file must be different.\n"); \
+}
 #define PRINT_ERR_CLI { \
     eprintf_gonf(); \
     gonferror_print(); \
@@ -196,20 +199,42 @@ int process_args(int argc, char **argv){
     }
 
     /* print information if requested */
-    if(gonflag_is_present(gonflag_get(GONFLAG_HELP))){
+    if(gonflag_is_present(GONFLAG_HELP)){
         print_help();
         free(args_stor);
         return OK;
     }
-    if(gonflag_is_present(gonflag_get(GONFLAG_LICENSE))){
+    if(gonflag_is_present(GONFLAG_LICENSE)){
         print_license();
         free(args_stor);
         return OK;
     }
-    if(gonflag_is_present(gonflag_get(GONFLAG_VERSION))){
+    if(gonflag_is_present(GONFLAG_VERSION)){
         print_version();
         free(args_stor);
         return OK;
+    }
+
+    /* set output file name */
+    outfile_name = gonflag_is_present(GONFLAG_OUTPUT) ?
+        gonflag_get_field(GONFLAG_OUTPUT, value) :
+        DEFAULT_OUTFILE;
+    if(gonflag_is_present(GONFLAG_STDOUT))
+        outfile_name = NULL;
+
+    /* set header output file name if needed */
+    if(gonflag_is_present(GONFLAG_HEADER)){
+        header_outfile_name = gonflag_get_field(GONFLAG_HEADER, value);
+        /* check whether outfile_name and header_outfile_name are different */
+        if(outfile_name != NULL
+        && strcmp(header_outfile_name, outfile_name) == 0){
+            PRINT_ERR_UNIQ;
+
+            free(args_stor);
+            return ERR_CLI;
+        }
+    }else{
+        header_outfile_name = NULL;
     }
 
     /* open input files */
@@ -218,22 +243,7 @@ int process_args(int argc, char **argv){
         free(args_stor);
         return ERR_FILE;
     }
-
-    /* set output file name */
-    outfile_name = gonflag_is_present(gonflag_get(GONFLAG_OUTPUT)) ?
-        gonflag_get(GONFLAG_OUTPUT)->value :
-        DEFAULT_OUTFILE;
-    if(gonflag_is_present(gonflag_get(GONFLAG_STDOUT)))
-        outfile_name = NULL;
-
-    /* set header output file name if needed */
-    header_outfile_name = NULL;
-    if(gonflag_is_present(gonflag_get(GONFLAG_HEADER))){
-        header_outfile_name = (gonflag_get(GONFLAG_HEADER)->value == NULL) ?
-            gonflag_get(GONFLAG_HEADER)->default_value :
-            gonflag_get(GONFLAG_HEADER)->value;
-    }
-
+    
     /* compile and check results */
     compile_res = compilegonf(infiles, outfile_name, header_outfile_name);
     if(compile_res != COMPILEGONF_OK){

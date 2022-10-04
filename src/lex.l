@@ -45,8 +45,8 @@ IDN [[:alnum:]_]+
 
 SHR_PREFIX -
 LNG_PREFIX -
-SHR [^[:cntrl:] ;=\-"]
-LNG {SHR}[^[:cntrl:] ;="]*
+SHR [^[:cntrl:] ;=\-"'\\]
+LNG {SHR}[^[:cntrl:] ;="'\\]*
 
 STR \"(\\.|[^\0"\\])*\"
 

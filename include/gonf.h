@@ -56,9 +56,25 @@ struct gonflag{
     const bool is_value;
 };
 
-/* Return true if the flag has appeared while parsing */
-#define gonflag_is_present(GONFLAG) \
-    (GONFLAG->count > 0)
+/* Macros used to find a certain flag
+ * and check whether it appeared.
+ */
+#define gonflag_is_present(INDEX) \
+    (gonflag_get(INDEX)->count > 0)
+#define gonflag_is_present_by_short(SHORTNAME) \
+    (gonflag_get_by_short(SHORTNAME)->count > 0)
+#define gonflag_is_present_by_long(LONGNAME) \
+    (gonflag_get_by_long(LONGNAME)->count > 0)
+
+/* Macros used to find a certain flag
+ * and return the value of the passed field.
+ */
+#define gonflag_get_field(INDEX, FIELD) \
+    (gonflag_get(INDEX)->FIELD)
+#define gonflag_get_field_by_short(SHORTNAME, FIELD) \
+    (gonflag_get_by_short(SHORTNAME)->FIELD)
+#define gonflag_get_field_by_long(LONGNAME, FIELD) \
+    (gonflag_get_by_long(LONGNAME)->FIELD)
 
 /* Return the flag associated with the given index. 
  * Returns NULL on error.

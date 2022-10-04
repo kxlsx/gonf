@@ -22,7 +22,7 @@ typedef int gonsize_t;
 #define NAME \
     "gonf"
 #define VERSION \
-    "0.0.1"
+    "0.1.0"
 #define DESCRIPTION \
     "Generate programs that parse command line flags."
 #define AUTHORS \
@@ -34,6 +34,10 @@ typedef int gonsize_t;
 
 #define eprintf(FMT, ...) fprintf(stderr, FMT, ## __VA_ARGS__)
 #define eprintf_gonf(FMT, ...) eprintf(NAME ": " FMT, ## __VA_ARGS__)
+
+/* stringize macro result */
+#define XSTR(S) STR(S)
+#define STR(S) #S
 
 /* ================= */
 #endif

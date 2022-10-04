@@ -24,7 +24,7 @@
 /* The number of possible shortnames 
  * and the ASCII codepoint they start at.
  */
-#define FLAGSHORT_MAX 93
+#define FLAGSHORT_MAX 94
 #define FLAGSHORT_OFF 33
 /* Empty shortname value. */
 #define FLAGSHORT_NULL '\0'

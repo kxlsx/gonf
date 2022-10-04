@@ -1,0 +1,6 @@
+HELP: -h --help "Print Help"; // single-line comment
+OUTPUT: -o =;
+/* mutliline
+            comment
+            */
+MCFLUNGUS: --skrzat "psotnik" = "churbo";

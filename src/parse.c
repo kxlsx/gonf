@@ -43,12 +43,12 @@ static int flagspec_set_identifier(struct flagspec *spec, char *identifier){
 }
 
 static int flagspec_set_shortname(struct flagspec *spec, char shortname){
-    if(spec->shortindex[shortname % FLAGSHORT_OFF] > 0)                   
+    if(spec->shortindex[shortname - FLAGSHORT_OFF] > 0)                   
         return FLAGSPEC_EXIST;
     if(spec->stor[spec->last].shortname != FLAGSHORT_NULL) 
         return FLAGSPEC_FILLD;
 
-    spec->shortindex[shortname % FLAGSHORT_OFF] = spec->last + 1;
+    spec->shortindex[shortname - FLAGSHORT_OFF] = spec->last + 1;
     spec->stor[spec->last].shortname = shortname;
     return FLAGSPEC_OK;
 }

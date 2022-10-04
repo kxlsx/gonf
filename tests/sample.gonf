@@ -1,0 +1,10 @@
+SAMPLE:         // identifier   | optional
+    -g          // shortname    | at least one of these
+    --sample    // longname     |-^
+    "sample"    // description  | optional
+    =           // is_value     | optional
+    "value"     // value        | optional, valid only if is_value
+    ;           //              | required 
+
+
+//SAMPLE:-s --sample "sample" = "value";

@@ -56,13 +56,13 @@ static struct gonflag gonf_flags[GONFLAGC] = {
 	{"gonf.h", NULL, "Create a C header file in addition to the parser.", "header-file", 0, 'H', true},
 };
 
-static const gonfc_t gonf_flags_by_short[93] = {
-	[5] = 3,
-	[6] = 6,
-	[10] = 1,
-	[12] = 5,
-	[17] = 4,
-	[20] = 2,
+static const gonfc_t gonf_flags_by_short[94] = {
+	[39] = 6,
+	[43] = 1,
+	[53] = 2,
+	[71] = 3,
+	[78] = 5,
+	[83] = 4,
 };
 
 static struct gonf_matchlist gonf_flags_by_long[GONFLAGC] = {
@@ -96,7 +96,7 @@ struct gonflag *gonflag_get(gonfc_t flag_index){
 struct gonflag *gonflag_get_by_short(char shortname){
     gonfc_t index;
     
-    index = gonf_flags_by_short[shortname % 33] - 1;
+    index = gonf_flags_by_short[shortname - 33] - 1;
     return (index >= 0) ? 
         gonf_flags + index :
         NULL;
@@ -228,6 +228,7 @@ char **gonfparse(gonfc_t argc, char **argv){
     for(gonfc_t i = 0; i < argc; i++){
         if(*(argv[i]) == '-'){
             if(value_state == REQUIRED) break;
+            if(value_state == OPTIONAL) flag->value = flag->default_value;
 
             argv[i]++;
             flag = (*(argv[i]) == '-') ?
@@ -256,12 +257,18 @@ char **gonfparse(gonfc_t argc, char **argv){
             }
         }
     }
-    if(value_state == REQUIRED){
+    switch(value_state){
+    case REQUIRED:
         if(flag->longname != NULL){
             gonf_err_set(GONFERR_NOVAL, flag->longname, strlen(flag->longname));
         }else{
             gonf_err_set(GONFERR_NOVAL, &(flag->shortname), 1);
         }
+        break;
+    case OPTIONAL:
+        flag->value = flag->default_value;
+        break;
+    default: break;
     }
 
     args_ret.stor[args_ret.len] = NULL;

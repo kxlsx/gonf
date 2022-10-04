@@ -52,9 +52,9 @@ LDFLAG_OUTPUT := -o
 
 # lexer
 LEX := lex
-LEXFLAGS         :=
-LEXFLAGS_DEBUG   :=
-LEXFLAGS_RELEASE := -F
+LEXFLAGS         := -8
+LEXFLAGS_DEBUG   := 
+LEXFLAGS_RELEASE := -f
 LEXFLAG_OUTPUT := -o
 
 # hexdump c style
