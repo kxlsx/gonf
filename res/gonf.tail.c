@@ -148,6 +148,7 @@ char **gonfparse(gonfc_t argc, char **argv){
         return NULL;
     }
 
+    flag = NULL;
     value_state = NONE;
     for(gonfc_t i = 0; i < argc; i++){
         if(*(argv[i]) == '-'){

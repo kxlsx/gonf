@@ -19,12 +19,12 @@ struct infiles{
     gonsize_t len;
 };
 
-#define infiles_get_file(infiles, index) \
-    (infiles->farr[index])
-#define infiles_get_path(infiles, index) \
-    (infiles->parr[index])
-#define infiles_len(infiles) \
-    (infiles->len)
+#define infiles_get_file(INFILES, INDEX) \
+    (INFILES->farr[INDEX])
+#define infiles_get_path(INFILES, INDEX) \
+    (INFILES->parr[INDEX])
+#define infiles_len(INFILES) \
+    (INFILES->len)
 
 /* Close the infiles and free the struct */
 void infiles_free(struct infiles *infiles);

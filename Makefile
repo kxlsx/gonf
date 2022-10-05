@@ -84,7 +84,7 @@ EXEC_NAME := gonf
 
 ifeq ($(OS),Windows_NT)
 EXEC_NAME := $(EXEC_NAME).exe
-RM    := del /q /s
+RM    := del /q /skl
 MKDIR := mkdir
 # No normal compiler/linker should care about
 # the slash direction but use this if you plan

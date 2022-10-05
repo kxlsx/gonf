@@ -38,7 +38,7 @@ void infiles_free(struct infiles *infiles){
 
 /* Check if the provided path points to a directory */
 static bool isdir(char *path){
-    struct stat path_stat;
+    struct stat path_stat = {0};
     stat(path, &path_stat);
     return S_ISDIR(path_stat.st_mode);
 }

@@ -61,11 +61,11 @@ struct flagspec *flagspec_new(void);
 void flagspec_free(struct flagspec *spec);
 
 /* Get the flaginfo stored at the given index. */
-#define flagspec_at(spec, at) \
-    spec->stor[at]
+#define flagspec_at(SPEC, AT) \
+    SPEC->stor[AT]
 /* Get the number of flags described in the given flagspec. */
-#define flagspec_len(spec) \
-    spec->last
+#define flagspec_len(SPEC) \
+    SPEC->last
 
 /* Try to parse the given gonf spec files
  * into the passed flagspec structure.
