@@ -75,16 +75,16 @@ static struct gonf_matchlist gonf_flags_by_long[GONFLAGC] = {
 };
 
 static struct {
-    int errno;
+    int errid;
     const char *value;
     gonfsize_t value_len;
 } gonf_err;
 
 
-static void gonf_err_set(int errno, const char *v, gonfsize_t vlen){
+static void gonf_err_set(int errid, const char *v, gonfsize_t vlen){
     gonf_err.value = v;
     gonf_err.value_len = vlen;
-    gonf_err.errno = errno;
+    gonf_err.errid = errid;
 }
 
 struct gonflag *gonflag_get(gonfc_t flag_index){
@@ -285,7 +285,7 @@ gonfc_t gonfargc(char **gonfargs){
 }
 
 int gonferror(void){
-    return gonf_err.errno;
+    return gonf_err.errid;
 }
 
 const char *gonferror_value(void){
@@ -293,7 +293,7 @@ const char *gonferror_value(void){
 }
 
 int gonferror_print(void){
-    switch (gonf_err.errno)
+    switch (gonf_err.errid)
     {
     case GONFERR_NOMEM:
         eprintf("failed to allocate memory.\n");
@@ -313,5 +313,5 @@ int gonferror_print(void){
     default:
         break;
     }
-    return gonf_err.errno;
+    return gonf_err.errid;
 }

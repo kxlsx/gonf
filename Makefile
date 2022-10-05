@@ -51,7 +51,7 @@ LDFLAG_LIB    := -l
 LDFLAG_OUTPUT := -o
 
 # lexer
-LEX := lex
+LEX := flex
 LEXFLAGS         := -8
 LEXFLAGS_DEBUG   := 
 LEXFLAGS_RELEASE := -f
@@ -165,7 +165,7 @@ $(HEXDUMP): $(RESS) | $(PRE_DIR)
 	$(foreach RES,$(RESS),$(HEXDUMPER) $(HEXDUMPER_FLAGS) $(RES) >> $(HEXDUMP);)
 
 $(PRE_DIR):
-	$(MKDIR) $(PRE_DIR)
+	$(MKDIR) $(call FIXPATH,$(PRE_DIR))
 
 $(OBJ_SUBDIRS): | $(OUTPUT_DIR)
 	$(MKDIR) $(call FIXPATH,$@)
