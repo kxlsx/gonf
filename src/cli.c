@@ -125,21 +125,22 @@ static struct infiles *infiles_new_stdin(){
 static void print_help(void){
     struct gonflag *flag;
 
-    puts(
+    fputs(
         NAME " v" VERSION "\n"
         AUTHORS "\n"
         DESCRIPTION "\n"
         "\n"
         "USAGE:"
-    );
-    printf("\t" NAME " [FLAGS]=<VALUES>... [FILES]...");
-    puts(
+        "\n"
+        "\t" NAME " [FLAGS]=<VALUES>... [FILES]..."
         "\n" 
-        "FLAGS:"
+        "FLAGS:",
+        stdout
     );
     for(gonfc_t flagi = 0; flagi < GONFLAGC; flagi++){
         flag = gonflag_get(flagi);
 
+        putchar('\n');
         putchar('\t');
         if(flag->shortname != GONFSHORT_NONE) 
             printf("-%c ", flag->shortname);
@@ -157,7 +158,6 @@ static void print_help(void){
         if(flag->description != NULL)
             printf("\t\t%s", flag->description);
         
-        putchar('\n');
         putchar('\n');
     }
 }
