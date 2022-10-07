@@ -3,7 +3,7 @@
 
 #include <matchlist.h>
 
-#define MATCHLIST_SIZE_INIT 8
+#define MATCHLIST_SIZE_INIT 16
 
 /* Restore the pointers inside the matchlist. */
 static void matchlist_restore(struct matchlist *list){

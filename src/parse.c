@@ -1,125 +1,10 @@
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
 #include <parse.h>
+#include <flagspec.h>
 #include <lex.h>
-#include <matchlist.h>
-#include <common.h>
 #include <infiles.h>
-
-/* flagspec eturn values. */
-#define FLAGSPEC_OK    0
-#define FLAGSPEC_NOMEM 1
-#define FLAGSPEC_EXIST 2
-#define FLAGSPEC_FILLD 3
-
-#define FLAGSPEC_SIZE_INIT 16
-
-static int flagspec_set_longname(struct flagspec *spec, char *longname){
-    if(match_find(longname, spec->longindex) != MATCH_NOTFOUND)
-        return FLAGSPEC_EXIST;
-    if(spec->stor[spec->last].longname != NULL) 
-        return FLAGSPEC_FILLD;
-
-    if(matchlist_append(spec->longindex, longname, spec->last) == MATCHLIST_NOMEM)
-        return FLAGSPEC_NOMEM;
-
-    spec->stor[spec->last].longname = longname;
-    return FLAGSPEC_OK;
-}
-
-static int flagspec_set_identifier(struct flagspec *spec, char *identifier){
-    if(match_find(identifier, spec->identindex) != MATCH_NOTFOUND)
-        return FLAGSPEC_EXIST;
-    if(spec->stor[spec->last].identifier != NULL) 
-        return FLAGSPEC_FILLD;
-
-    if(matchlist_append(spec->identindex, identifier, spec->last) == MATCHLIST_NOMEM)
-        return FLAGSPEC_NOMEM;
-
-    spec->stor[spec->last].identifier = identifier;
-    return FLAGSPEC_OK;
-}
-
-static int flagspec_set_shortname(struct flagspec *spec, char shortname){
-    if(spec->shortindex[shortname - FLAGSHORT_OFF] > 0)                   
-        return FLAGSPEC_EXIST;
-    if(spec->stor[spec->last].shortname != FLAGSHORT_NULL) 
-        return FLAGSPEC_FILLD;
-
-    spec->shortindex[shortname - FLAGSHORT_OFF] = spec->last + 1;
-    spec->stor[spec->last].shortname = shortname;
-    return FLAGSPEC_OK;
-}
-
-static int flagspec_set_description(struct flagspec *spec, char *description){
-    if(spec->stor[spec->last].description != NULL)
-        return FLAGSPEC_FILLD;
-
-    spec->stor[spec->last].description = description;
-    return FLAGSPEC_OK;
-}
-
-static int flagspec_set_value(struct flagspec *spec, char *value){
-    spec->stor[spec->last].value = value;
-    return FLAGSPEC_OK;
-}
-
-static int flagspec_set_is_value(struct flagspec *spec, bool is_value){
-    spec->stor[spec->last].is_value = is_value;
-    return FLAGSPEC_OK;
-}
-
-/* Change flagspec's current flag to the next one */
-static int flagspec_next(struct flagspec *spec){
-    struct flaginfo *tmp;
-
-    spec->last++;
-    if(spec->last == spec->size){
-        spec->size *= 2;
-        tmp = realloc(spec->stor, spec->size * sizeof(struct flaginfo));
-        if(tmp == NULL) return FLAGSPEC_NOMEM;
-
-        spec->stor = tmp;
-        memset(spec->stor + spec->last, 0, (spec->size - spec->last) * sizeof(struct flaginfo));
-    }
-    return FLAGSPEC_OK;
-}
-
-struct flagspec *flagspec_new(void){
-    struct flagspec *s;
-    s = calloc(1, sizeof(struct flagspec));
-    if(s == NULL) return NULL;
-    
-    s->stor = calloc(FLAGSPEC_SIZE_INIT, sizeof(struct flaginfo));
-    if(s->stor == NULL) return NULL;
-
-    s->longindex = matchlist_new();
-    if(s->longindex == NULL) return NULL;
-
-    s->identindex = matchlist_new();
-    if(s->identindex == NULL) return NULL;
-
-    s->size = FLAGSPEC_SIZE_INIT;
-    s->last = 0;
-    return s;
-}
-
-void flagspec_free(struct flagspec *spec){
-    struct flaginfo f;
-    for(flagc_t i = 0; i < flagspec_len(spec); i++){
-        f = flagspec_at(spec, i);
-        if(f.identifier != NULL)  free(f.identifier);
-        if(f.longname != NULL)    free(f.longname);
-        if(f.description != NULL) free(f.description);
-        if(f.value != NULL)       free(f.value);
-    }
-    free(spec->stor);
-    matchlist_free(spec->longindex);
-    matchlist_free(spec->identindex);
-    free(spec);
-}
+#include <common.h>
 
 /* States of the parsegonf parser. */
 enum parsegonf_state{
@@ -156,42 +41,26 @@ enum parsegonf_state{
 #define PARSEGONF_THROW_ERR_IDN(TOKENFMT, TOKEN) \
     PARSEGONF_THROW_ERR(TOKENFMT, TOKEN, "identifier must precede flag's name.\n");
 
-/* Try to set current flag's field to a duplicate of lexgonf_lval.text */
-#define PARSEGONF_TRY_SET_TEXT(FIELD, TO_DUP_ERR_FMT) { \
-    char *dup; \
+/* Try to set current flag's field to lexgonf_lval.text */
+#define PARSEGONF_SET_TEXT(FIELD, ERR_FMT) { \
     int res; \
     \
-    dup = strndup(lexgonf_lval.text, lexgonf_leng); \
-    if(dup == NULL) return PGF_DIE; \
-    \
-    res = flagspec_set_##FIELD(flags, dup); \
+    res = flagspec_set_##FIELD(flags, lexgonf_lval.text, lexgonf_leng); \
     switch(res){ \
     case FLAGSPEC_NOMEM: \
-        free(dup); \
         return PGF_DIE; \
     case FLAGSPEC_EXIST: \
-        free(dup); \
-        PARSEGONF_THROW_ERR_EXIST(TO_DUP_ERR_FMT, lexgonf_lval.text, FIELD) \
+        PARSEGONF_THROW_ERR_EXIST(ERR_FMT, lexgonf_lval.text, FIELD) \
     case FLAGSPEC_FILLD: \
-        free(dup); \
-        PARSEGONF_THROW_ERR_FILLD(TO_DUP_ERR_FMT, lexgonf_lval.text, FIELD) \
+        PARSEGONF_THROW_ERR_FILLD(ERR_FMT, lexgonf_lval.text, FIELD) \
     case FLAGSPEC_OK: break; \
     } \
 }
 
-/* Set current flag's field to a duplicate of lexgonf_lval.text */
-#define PARSEGONF_SET_TEXT(FIELD) { \
-    char *dup; \
-    dup = strndup(lexgonf_lval.text, lexgonf_leng); \
-    if(dup == NULL) return PGF_DIE; \
-    \
-    flagspec_set_##FIELD(flags, dup); \
-}
-
 /* Try to set current flag's field to lexgonf_lval.c */
-#define PARSEGONF_TRY_SET_C(FIELD, VALUE_ERR_FMT) { \
+#define PARSEGONF_SET_C(FIELD, ERR_FMT) { \
     if(flagspec_set_##FIELD(flags, lexgonf_lval.c) != FLAGSPEC_OK) \
-        PARSEGONF_THROW_ERR_FILLD(VALUE_ERR_FMT, lexgonf_lval.c, FIELD) \
+        PARSEGONF_THROW_ERR_FILLD(ERR_FMT, lexgonf_lval.c, FIELD) \
 }
 
 /* Set current flag's field to value */
@@ -233,13 +102,13 @@ enum parsegonf_state{
 
 PARSEGONF_STATE_FN_DEFINE(BEG,
     /* IDN */
-    PARSEGONF_TRY_SET_TEXT(identifier, PARSEGONF_ERR_FMT_IDN);
+    PARSEGONF_SET_TEXT(identifier, PARSEGONF_ERR_FMT_IDN);
     return PGF_BEG;,
     /* SHR */
-    PARSEGONF_TRY_SET_C(shortname, PARSEGONF_ERR_FMT_SHR);
+    PARSEGONF_SET_C(shortname, PARSEGONF_ERR_FMT_SHR);
     return PGF_NAM;,
     /* LNG */
-    PARSEGONF_TRY_SET_TEXT(longname, PARSEGONF_ERR_FMT_LNG);
+    PARSEGONF_SET_TEXT(longname, PARSEGONF_ERR_FMT_LNG);
     return PGF_NAM;,
     /* SEP */
     PARSEGONF_THROW_ERR_EXPECT(PARSEGONF_ERR_FMT_C, lexgonf_lval.c, "name", "separator");,
@@ -253,15 +122,15 @@ PARSEGONF_STATE_FN_DEFINE(NAM,
     /* IDN */
     PARSEGONF_THROW_ERR_IDN(PARSEGONF_ERR_FMT_IDN, lexgonf_lval.text);,
     /* SHR */
-    PARSEGONF_TRY_SET_C(shortname, PARSEGONF_ERR_FMT_SHR);
+    PARSEGONF_SET_C(shortname, PARSEGONF_ERR_FMT_SHR);
     return PGF_STR;,
     /* LNG */
-    PARSEGONF_TRY_SET_TEXT(longname, PARSEGONF_ERR_FMT_LNG);
+    PARSEGONF_SET_TEXT(longname, PARSEGONF_ERR_FMT_LNG);
     return PGF_STR;,
     /* SEP */
     PARSEGONF_NEXT;,
     /* STR */
-    PARSEGONF_SET_TEXT(description);
+    PARSEGONF_SET_TEXT(description, PARSEGONF_ERR_FMT_STR);
     return PGF_STR;,
     /* ISV */
     PARSEGONF_SET(is_value, true);
@@ -278,7 +147,7 @@ PARSEGONF_STATE_FN_DEFINE(STR,
     /* SEP */
     PARSEGONF_NEXT;,
     /* STR */
-    PARSEGONF_TRY_SET_TEXT(description, PARSEGONF_ERR_FMT_STR);
+    PARSEGONF_SET_TEXT(description, PARSEGONF_ERR_FMT_STR);
     return PGF_STR;,
     /* ISV */
     PARSEGONF_SET(is_value, true);
@@ -295,7 +164,7 @@ PARSEGONF_STATE_FN_DEFINE(VAL,
     /* SEP */
     PARSEGONF_NEXT;,
     /* STR */
-    PARSEGONF_SET_TEXT(value);
+    PARSEGONF_SET_TEXT(value, PARSEGONF_ERR_FMT_STR);
     return PGF_END;,
     /* ISV */
     PARSEGONF_THROW_ERR_FILLD(PARSEGONF_ERR_FMT_C, lexgonf_lval.c, value);

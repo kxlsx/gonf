@@ -1,5 +1,4 @@
 // TODO: replace matchlist with a hashmap in parsegonf
-// TODO: replace strdup in parsegonf with something better (mempool?) 
 // TODO: better README
 // TODO: maybe do configurable prefix?
 // TODO: manpage?

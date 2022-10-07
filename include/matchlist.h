@@ -2,10 +2,6 @@
 /* ================= */
 #define _MATCHLIST_H 1
 
-#ifndef _STDDEF_H
-#include <stddef.h>
-#endif
-
 #ifndef _COMMON_H
 #include <common.h>
 #endif

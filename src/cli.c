@@ -4,10 +4,10 @@
 #include <errno.h>
 #include <sys/stat.h> //TODO: check if works on windows
 
-#include <common.h>
 #include <gonf.h>
 #include <infiles.h>
 #include <comp.h>
+#include <common.h>
 
 #define PRINT_ERR_NOMEM { \
     eprintf_gonf("failed to allocate memory.\n"); \

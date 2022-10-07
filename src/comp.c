@@ -1,8 +1,9 @@
 #include <stdio.h>
 
 #include <comp.h>
-#include <infiles.h>
 #include <parse.h>
+#include <flagspec.h>
+#include <infiles.h>
 #include <gonf_dump.h>
 
 /* Compile identifier macros.
@@ -15,8 +16,8 @@ static void compile_gonf_identifiers(struct flagspec *flags, FILE *outfile){
     struct matchnode *idents;
     flagc_t idents_count;
 
-    idents_count = flags->identindex->len;
-    idents = flags->identindex->matches;
+    idents_count = flags->rec_identifier->len;
+    idents = flags->rec_identifier->matches;
     fputs("#define GONFLAG_INDEX(IDENTIFIER) GONFLAG_##IDENTIFIER\n", outfile);
     for(flagc_t i = 0; i < idents_count; i++){
         fprintf(
@@ -112,7 +113,7 @@ static void compile_gonf_flags_by_short(struct flagspec *flags, FILE *outfile){
 
     fputs("static const gonfc_t gonf_flags_by_short["XSTR(FLAGSHORT_MAX)"] = {\n", outfile);\
     for(flagc_t i = 0; i < FLAGSHORT_MAX; i++){
-        shortn = flags->shortindex[i];
+        shortn = flags->rec_shortname[i];
         if(shortn != 0){
             fprintf(outfile, "\t[%d] = %d,\n", i, shortn);
         }
@@ -131,8 +132,8 @@ static void compile_gonf_flags_by_long(struct flagspec *flags, FILE *outfile){
     struct matchnode *longs;
     flagc_t longs_last;
 
-    longs_last = flags->longindex->len - 1;
-    longs = flags->longindex->matches;
+    longs_last = flags->rec_longname->len - 1;
+    longs = flags->rec_longname->matches;
 
     fputs("static struct gonf_matchlist gonf_flags_by_long[GONFLAGC] = {\n", outfile);
     for(flagc_t i = 0; i < longs_last; i++){
