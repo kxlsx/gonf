@@ -84,13 +84,13 @@ EXEC_NAME := gonf
 
 ifeq ($(OS),Windows_NT)
 EXEC_NAME := $(EXEC_NAME).exe
-RM    := del /q /skl
+RM    := del /q /s
 MKDIR := mkdir
 # No normal compiler/linker should care about
 # the slash direction but use this if you plan
 # to do system specific stuff.
 FIXPATH  = $(subst /,\,$1)
-SUBDIRS  = $(SRC_DIR) $(subst ./,,$(subst \,/, \
+SUBDIRS  = $1 $(subst ./,,$(subst \,/, \
 	$(shell PowerShell.exe -NoProfile -NonInteractive \
 		"Get-ChildItem -Path $1 -Recurse -Attributes Directory | Resolve-Path -Relative")))
 else
@@ -136,7 +136,8 @@ run: all
 	@echo Executing complete.
 
 clean:
-	$(RM) $(call FIXPATH,$(OUTPUT_DIR) $(PRE_DIR))
+	$(RM) $(call FIXPATH,$(OUTPUT_DIR))
+	$(RM) $(call FIXPATH,$(PRE_DIR))
 	@echo Cleaning complete.
 
 # Link OBJS.
