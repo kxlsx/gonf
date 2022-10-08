@@ -28,7 +28,7 @@
 }
 
 void infiles_free(struct infiles *infiles){
-    for(gonsize_t i = 0; i < infiles->len; i++){
+    for(gonfsize_t i = 0; i < infiles->len; i++){
         fclose(infiles->farr[i]);
     }
     free(infiles->farr);
@@ -46,7 +46,7 @@ static bool isdir(char *path){
 /* Create a new infiles struct, opening every file in file_path.
  * On error, writes to stderr and returns NULL.
  */
-static struct infiles *infiles_new(char **file_paths, gonsize_t count){
+static struct infiles *infiles_new(char **file_paths, gonfsize_t count){
     struct infiles *infiles;
 
     infiles = malloc(sizeof(struct infiles));
@@ -67,7 +67,7 @@ static struct infiles *infiles_new(char **file_paths, gonsize_t count){
     /* copy file paths */
     memcpy(infiles->parr, file_paths, count * sizeof(char *));
     /* open files */
-    for(gonsize_t i = 0; i < count; i++){
+    for(gonfsize_t i = 0; i < count; i++){
         infiles->farr[i] = fopen(infiles->parr[i], "r");
         /* check if is a directory */
         if(isdir(infiles->parr[i])){

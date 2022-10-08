@@ -16,7 +16,7 @@
 struct infiles{
     FILE **farr;
     char **parr;
-    gonsize_t len;
+    gonfsize_t len;
 };
 
 #define infiles_get_file(INFILES, INDEX) \

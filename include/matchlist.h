@@ -12,7 +12,7 @@
 
 #define MATCH_NOTFOUND  -1
 
-typedef gonsize_t matchc_t;
+typedef gonfsize_t matchc_t;
 
 /* A match entry in a matchlist */
 struct matchnode{

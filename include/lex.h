@@ -6,7 +6,7 @@
 #include <common.h>
 #endif
 
-typedef gonsize_t lexsize_t;
+typedef gonfsize_t lexsize_t;
 
 enum lexgonf_token{
     LGF_END = 0,

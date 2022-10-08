@@ -9,6 +9,7 @@
 static void matchlist_restore(struct matchlist *list){
     matchc_t last;
 
+    /* restore every node's 'next' pointer */
     if(list->len > 0){
         last = list->len - 1;
         for(matchc_t i = 0; i < last; i++){
@@ -40,6 +41,7 @@ void matchlist_free(struct matchlist *list){
 int matchlist_append(struct matchlist *list, char *match, matchc_t index){
     struct matchnode *tmp;
 
+    /* realloc if filled up */
     if(list->len == list->size){
         list->size *= 2;
         tmp = realloc(list->matches, list->size * sizeof(struct matchnode));
@@ -49,6 +51,7 @@ int matchlist_append(struct matchlist *list, char *match, matchc_t index){
         matchlist_restore(list);
     }
 
+    /* add the new node at the end */
     tmp = list->matches + list->len;
     tmp->index = index;
     tmp->match = match;
@@ -71,6 +74,10 @@ int match_find(char *needle, struct matchlist *list){
     curr = list->matches;
     prev = &(list->matches[count - 1]);
 
+    /* compare every match with needle 
+     * char by char, removing it from the list 
+     * if the chars don't match
+     */
     for(stepc = 0; count != 0 && stepc <= needle_len; stepc++){
         prev_count = count;
         for(matchc_t i = 0; i < prev_count; i++){

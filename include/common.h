@@ -6,7 +6,7 @@
 #include <stdbool.h>
 #endif
 
-typedef int gonsize_t;
+typedef int gonfsize_t;
 
 /* Return values. */
 #define OK          0

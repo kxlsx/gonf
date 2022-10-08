@@ -192,7 +192,7 @@ int parsegonf(struct infiles *infiles, struct flagspec *flags){
     bool is_err;
 
     is_err = false;
-    for(gonsize_t i = 0; i < infiles_len(infiles); i++){
+    for(gonfsize_t i = 0; i < infiles_len(infiles); i++){
         /* pass the current infile to the lexer */
         lexgonf_set_in(infiles_get_file(infiles, i));
         inpath = infiles_get_path(infiles, i);

@@ -10,9 +10,9 @@
 #define FLAGSPEC_STRPOOL_SIZE_INIT 1024
 
 /* Allocate str in the flagsspec's strpool */
-static char *flagspec_alloc_str(struct flagspec *spec, char *str, gonsize_t strlen){
+static char *flagspec_alloc_str(struct flagspec *spec, char *str, gonfsize_t strlen){
     struct strpool *pool, *tmp;
-    gonsize_t newsize;
+    gonfsize_t newsize;
     char *ret;
 
     /* fetch the last pool */
@@ -87,12 +87,14 @@ int flagspec_next(struct flagspec *spec){
     struct flaginfo *tmp;
 
     spec->last++;
+    /* realloc if needed */
     if(spec->last == spec->size){
         spec->size *= 2;
         tmp = realloc(spec->stor, spec->size * sizeof(struct flaginfo));
         if(tmp == NULL) return FLAGSPEC_NOMEM;
 
         spec->stor = tmp;
+        /* set the new allocated space to zeroes */
         memset(spec->stor + spec->last, 0, (spec->size - spec->last) * sizeof(struct flaginfo));
     }
     return FLAGSPEC_OK;
@@ -102,7 +104,7 @@ int flagspec_next(struct flagspec *spec){
  * (like identifier & longname).
  */
 #define FLAGSPEC_SET_UNIQ_TEXT_FIELD_FN_DEFINE(FIELD) \
-    int flagspec_set_##FIELD(struct flagspec *spec, char *FIELD, gonsize_t len){ \
+    int flagspec_set_##FIELD(struct flagspec *spec, char *FIELD, gonfsize_t len){ \
         char *str_allocd; \
         \
         /* check if unique in flagspec */ \
@@ -139,7 +141,7 @@ int flagspec_set_shortname(struct flagspec *spec, char shortname){
     return FLAGSPEC_OK;
 }
 
-int flagspec_set_description(struct flagspec *spec, char *description, gonsize_t len){
+int flagspec_set_description(struct flagspec *spec, char *description, gonfsize_t len){
     char *str_allocd;
 
     /* check if not already set */
@@ -153,7 +155,7 @@ int flagspec_set_description(struct flagspec *spec, char *description, gonsize_t
     return FLAGSPEC_OK;
 }
 
-int flagspec_set_value(struct flagspec *spec, char *value, gonsize_t len){
+int flagspec_set_value(struct flagspec *spec, char *value, gonfsize_t len){
     char *str_allocd;
 
     str_allocd = flagspec_alloc_str(spec, value, len);
@@ -176,7 +178,7 @@ void flagspec_free(struct flagspec *spec){
     matchlist_free(spec->rec_identifier);
     
     /* free every strpool and the pool pool itself */
-    for(gonsize_t i = 0; i <= spec->strpool_pool_last; i++){
+    for(gonfsize_t i = 0; i <= spec->strpool_pool_last; i++){
         free((spec->strpool_pool + i)->stor);
     }
     free(spec->strpool_pool);
