@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
-#include <sys/stat.h> //TODO: check if works on windows
+#include <sys/stat.h>
 
 #include <gonf.h>
 #include <infiles.h>

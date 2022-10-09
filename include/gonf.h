@@ -33,18 +33,13 @@ typedef int gonfc_t;
  * associated with a flag.
  *
  * FIELDS:
- *  + shortname   
- *  ** a single character name
- *  + longname    
- *  ** multiple character name
- *  + description 
- *  ** a description
- *  + is_value    
- *  ** does the flag contain a value or not
- *  + value       
- *  ** flag's value (char *)
- *  + count       
- *  ** how many times has the flag been parsed
+ *  + shortname     - a single character name.
+ *  + longname      - multiple character name.
+ *  + description   - a description.
+ *  + is_value      - whether the flag accepts a value or not.
+ *  + default_value - flag's default value (char *).
+ *  + value         - flag's value (char *).
+ *  + count         - how many times has the flag been parsed.
  */
 struct gonflag{
     char *default_value;

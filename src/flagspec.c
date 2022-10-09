@@ -15,11 +15,14 @@ static char *flagspec_alloc_str(struct flagspec *spec, char *str, gonfsize_t str
     gonfsize_t newsize;
     char *ret;
 
+    /* increment len because of null */
+    strlen++;
+
     /* fetch the last pool */
     pool = spec->strpool_pool + spec->strpool_pool_last;
     
     /* if the last pool will overflow */
-    if(pool->len + strlen + 1 >= pool->size){
+    if(pool->len + strlen >= pool->size){
         /* check if there's need to realloc the strpool_pool */
         spec->strpool_pool_last++;
         newsize = pool->size;
@@ -34,7 +37,7 @@ static char *flagspec_alloc_str(struct flagspec *spec, char *str, gonfsize_t str
         /* alloc the new pool with a larger, sufficient size */
         do{
             newsize *= 2;
-        }while(strlen + 1 >= newsize);
+        }while(strlen >= newsize);
         pool = spec->strpool_pool + spec->strpool_pool_last;
         pool->stor = malloc(newsize);
         if(pool->stor == NULL) return NULL;
@@ -44,7 +47,7 @@ static char *flagspec_alloc_str(struct flagspec *spec, char *str, gonfsize_t str
 
     /* copy the str to the pool and return its pointer */
     ret = strcpy(pool->stor + pool->len, str);
-    pool->len += strlen + 1;
+    pool->len += strlen;
     return ret;
 }
 

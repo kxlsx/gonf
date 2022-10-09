@@ -59,13 +59,13 @@ IDENTIFIER: -SHORTNAME --LONGNAME "DESCRIPTION" = "DEFAULT_VALUE";
 ```
 where:
 * `IDENTIFIER` is a alphanumeric string.
-* `SHORTNAME` is any ASCII character except `';"=-'\`.
-* `LONGNAME` is a `SHORTNAME` followed by any string of characters except `';"='\`.
+* `SHORTNAME` is any ASCII character except `';"=-\`.
+* `LONGNAME` is a `SHORTNAME` followed by any string of characters except `';"=\`.
 * `DESCRIPTION` is any string of characters except `NUL`.
-* `DEFAULT_VALUE` is any string of characters except `NUL` *(has to be preceded by `'='`)*.
+* `DEFAULT_VALUE` is any string of characters except `NUL` *(has to be preceded by `=`)*.
 
 and where every part is optional except `SHORTNAME` or `LONGNAME` 
-*(at least one must be present)* and a `';'` separator.
+*(at least one must be present)* and a `;` separator.
 
 ...or expressed in [Backus-Naur][bakus] form:
 ```html
@@ -80,7 +80,7 @@ and where every part is optional except `SHORTNAME` or `LONGNAME`
 <SEPARATOR>   ::= ";"
 
 <TEXT>   ::= <CHAR> <TEXT> | <CHAR>
-<CHAR>   ::= ; any printable, non-whitespace char, except ';"=-'.
+<CHAR>   ::= ; any printable, non-whitespace char, except ';"=-\.
 <STRING> ::= ; any string of characters (except NUL) enclosed in double quotes
 ```
 
