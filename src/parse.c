@@ -30,16 +30,19 @@ enum parsegonf_state{
     return PGF_ERR; \
 }
 #define PARSEGONF_THROW_ERR_EXIST(TOKENFMT, TOKEN, FIELD) \
-    PARSEGONF_THROW_ERR(TOKENFMT, TOKEN, #FIELD " has already been defined.\n");
+    PARSEGONF_THROW_ERR(TOKENFMT, TOKEN, #FIELD " already defined in another flag.\n");
 
 #define PARSEGONF_THROW_ERR_FILLD(TOKENFMT, TOKEN, FIELD) \
-    PARSEGONF_THROW_ERR(TOKENFMT, TOKEN, "repeated " #FIELD " definition.\n"); \
+    PARSEGONF_THROW_ERR(TOKENFMT, TOKEN, #FIELD " has already been defined.\n");
 
 #define PARSEGONF_THROW_ERR_EXPECT(TOKENFMT, TOKEN, EXPECTED, GOT) \
-    PARSEGONF_THROW_ERR(TOKENFMT, TOKEN, EXPECTED " expected, not " GOT ".\n");
+    PARSEGONF_THROW_ERR(TOKENFMT, TOKEN, "expected " EXPECTED ", not " GOT ".\n");
 
 #define PARSEGONF_THROW_ERR_IDN(TOKENFMT, TOKEN) \
     PARSEGONF_THROW_ERR(TOKENFMT, TOKEN, "identifier must precede flag's name.\n");
+
+#define PARSEGONF_THROW_ERR_NAM(TOKENFMT, TOKEN) \
+    PARSEGONF_THROW_ERR(TOKENFMT, TOKEN, "names have already been defined.\n");
 
 /* Try to set current flag's field to lexgonf_lval.text */
 #define PARSEGONF_SET_TEXT(FIELD, ERR_FMT) { \
@@ -59,8 +62,18 @@ enum parsegonf_state{
 
 /* Try to set current flag's field to lexgonf_lval.c */
 #define PARSEGONF_SET_C(FIELD, ERR_FMT) { \
-    if(flagspec_set_##FIELD(flags, lexgonf_lval.c) != FLAGSPEC_OK) \
+    int res; \
+    \
+    res = flagspec_set_##FIELD(flags, lexgonf_lval.c); \
+    switch(res){ \
+    case FLAGSPEC_NOMEM: \
+        return PGF_DIE; \
+    case FLAGSPEC_EXIST: \
+        PARSEGONF_THROW_ERR_EXIST(ERR_FMT, lexgonf_lval.c, FIELD) \
+    case FLAGSPEC_FILLD: \
         PARSEGONF_THROW_ERR_FILLD(ERR_FMT, lexgonf_lval.c, FIELD) \
+    case FLAGSPEC_OK: break; \
+    } \
 }
 
 /* Set current flag's field to value */
@@ -141,9 +154,9 @@ PARSEGONF_STATE_FN_DEFINE(STR,
     /* IDN */
     PARSEGONF_THROW_ERR_IDN(PARSEGONF_ERR_FMT_IDN, lexgonf_lval.text);,
     /* SHR */
-    PARSEGONF_THROW_ERR(PARSEGONF_ERR_FMT_SHR, lexgonf_lval.c, "names have already been defined.\n");,
+    PARSEGONF_THROW_ERR_NAM(PARSEGONF_ERR_FMT_SHR, lexgonf_lval.c);,
     /* LNG */
-    PARSEGONF_THROW_ERR(PARSEGONF_ERR_FMT_LNG, lexgonf_lval.text, "names have already been defined.\n");,
+    PARSEGONF_THROW_ERR_NAM(PARSEGONF_ERR_FMT_LNG, lexgonf_lval.text);,
     /* SEP */
     PARSEGONF_NEXT;,
     /* STR */

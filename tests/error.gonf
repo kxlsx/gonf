@@ -1,12 +1,8 @@
-// repeated shortname
+// already been defined
 -r;
 -r;
-
-// repeated longname
 --repeat;
 --repeat;
-
-// repeated identifier
 REPEAT: --rep1;
 REPEAT: --rep2;
 
@@ -25,3 +21,9 @@ REPEAT: --rep2;
 -9 = "exp" IDN:;
 -0 = "exp" "exp";
 -a = "exp" =;
+
+// repeated definition
+-f -g;
+--fild --fild1;
+-h "esa" "esa";
+--filld2 ==;
