@@ -5,13 +5,13 @@
 #ifndef _COMMON_H
 #include <common.h>
 #endif
-#ifndef _MATCHLIST_H
-#include <matchlist.h>
+#ifndef _MATCHSET_H
+#include <matchset.h>
 #endif
 
 /* flagspec return values. */
-#define FLAGSPEC_OK    0
-#define FLAGSPEC_NOMEM 1
+#define FLAGSPEC_OK    OK
+#define FLAGSPEC_NOMEM ERR_NOMEM
 #define FLAGSPEC_EXIST 2
 #define FLAGSPEC_FILLD 3
 
@@ -49,14 +49,14 @@ struct strpool{
  */
 struct flagspec{
     struct flaginfo *stor;
-    struct matchlist *rec_longname;
-    struct matchlist *rec_identifier;
+    struct matchset *longname_record;
+    struct matchset *identifier_record;
     struct strpool *strpool_pool;
     gonfsize_t strpool_pool_size;
     gonfsize_t strpool_pool_last;
     flagc_t size;
     flagc_t last;
-    flagc_t rec_shortname[FLAGSHORT_MAX];
+    flagc_t shortname_record[FLAGSHORT_MAX];
 };
 
 /* Get the flaginfo stored at the given index. */
@@ -68,7 +68,7 @@ struct flagspec{
 
 /* Allocate a new, empty flagspec. */
 struct flagspec *flagspec_new(void);
-/* Free all the memory associated with the given flagspec. */
+/* Free all memory associated with the given flagspec. */
 void flagspec_free(struct flagspec *spec);
 
 /* Change flagspec's current flag to the next one. 
@@ -83,8 +83,9 @@ int flagspec_next(struct flagspec *spec);
 /* Set the corresponding field at the last flaginfo in the flagspec.
  * 
  * RETURNS:
- *  if successful - FLAGSPEC_OK 
- *  on error      - FLAGSPEC_EXIST | FLAGSPEC_FILLD | FLAGSPEC_NOMEM
+ *  FLAGSPEC_OK 
+ *  or
+ *  FLAGSPEC_EXIST | FLAGSPEC_FILLD | FLAGSPEC_NOMEM - on error
  */
 int flagspec_set_longname(struct flagspec *spec, char *longname, gonfsize_t len);
 int flagspec_set_identifier(struct flagspec *spec, char *identifier, gonfsize_t len);

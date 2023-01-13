@@ -13,19 +13,18 @@
  *  #define GONFLAG_SAMPLE 0
  */
 static void compile_gonf_identifiers(struct flagspec *flags, FILE *outfile){
-    struct matchnode *idents;
-    flagc_t idents_count;
+    struct flaginfo flag;
 
-    idents_count = flags->rec_identifier->len;
-    idents = flags->rec_identifier->matches;
     fputs("#define GONFLAG_INDEX(IDENTIFIER) GONFLAG_##IDENTIFIER\n", outfile);
-    for(flagc_t i = 0; i < idents_count; i++){
-        fprintf(
-            outfile, 
-            "#define GONFLAG_%s %d\n", 
-            idents[i].match, 
-            idents[i].index
-        );
+    for(flagc_t flagi = 0; flagi < flagspec_len(flags); flagi++){
+        flag = flagspec_at(flags, flagi);
+        if(flag.identifier != NULL)
+            fprintf(
+                outfile, 
+                "#define GONFLAG_%s %d\n", 
+                flag.identifier,
+                flagi
+            );
     }
 }
 
@@ -113,7 +112,7 @@ static void compile_gonf_flags_by_short(struct flagspec *flags, FILE *outfile){
 
     fputs("static const gonfc_t gonf_flags_by_short["XSTR(FLAGSHORT_MAX)"] = {\n", outfile);\
     for(flagc_t i = 0; i < FLAGSHORT_MAX; i++){
-        shortn = flags->rec_shortname[i];
+        shortn = flags->shortname_record[i];
         if(shortn != 0){
             fprintf(outfile, "\t[%d] = %d,\n", i, shortn);
         }
@@ -129,27 +128,34 @@ static void compile_gonf_flags_by_short(struct flagspec *flags, FILE *outfile){
  * };
  */
 static void compile_gonf_flags_by_long(struct flagspec *flags, FILE *outfile){
-    struct matchnode *longs;
-    flagc_t longs_last;
-
-    longs_last = flags->rec_longname->len - 1;
-    longs = flags->rec_longname->matches;
+    struct flaginfo flag;
+    flagc_t longc, long_last;
 
     fputs("static struct gonf_matchlist gonf_flags_by_long[GONFLAGC] = {\n", outfile);
-    for(flagc_t i = 0; i < longs_last; i++){
-        fprintf(outfile, 
-            "\t{%d, \"%s\", gonf_flags_by_long + %d},\n", 
-            longs[i].index,
-            longs[i].match,
-            i + 1
-        );
+
+    longc = 0;
+    long_last = flags->longname_record->len;
+    for(flagc_t flagi = 0; flagi < flagspec_len(flags); flagi++){
+        flag = flagspec_at(flags, flagi);
+        if(flag.longname != NULL){
+            longc++;
+            if(longc == long_last){
+                fprintf(outfile, 
+                    "\t{%d, \"%s\", gonf_flags_by_long},\n"
+                    "};\n\n",
+                    flagi,
+                    flag.longname
+                );
+                break;
+            }else
+                fprintf(outfile, 
+                    "\t{%d, \"%s\", gonf_flags_by_long + %d},\n", 
+                    flagi,
+                    flag.longname,
+                    longc
+                );
+        }
     }
-    fprintf(outfile, 
-            "\t{%d, \"%s\", gonf_flags_by_long},\n"
-            "};\n\n",
-            longs[longs_last].index,
-            longs[longs_last].match
-    );
 }
 
 /* Compile the flagspec into a C library in outfile */
@@ -256,4 +262,3 @@ int compilegonf(struct infiles *infiles, char *outfile_name, char *header_outfil
     flagspec_free(flags);
     return COMPILEGONF_OK;
 }
- 

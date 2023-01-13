@@ -106,7 +106,7 @@ A representant gonf file would then look like this:
 --skrzat "psotnik" = "churbo";
 ```
 
-Additionally, in order have easier access to the flags in code, 
+Additionally, in order to have easier access to the flags in code, 
 an identifier can be specified:
 ```
 HELP: -h --help "Print Help";

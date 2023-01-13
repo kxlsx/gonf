@@ -33,7 +33,7 @@
  * 
  * ERRORS:
  *  On error, the function will print an error message
- *  to stderr.
+ *  to stderr and return a COMPILEGONF_ERR_* value.
  */
 int compilegonf(struct infiles *infiles, char *outfile_name, char *header_outfile_name);
 

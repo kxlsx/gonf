@@ -2,7 +2,7 @@
 #include <string.h>
 
 #include <flagspec.h>
-#include <matchlist.h>
+#include <matchset.h>
 #include <common.h>
 
 #define FLAGSPEC_SIZE_INIT 16
@@ -65,11 +65,11 @@ struct flagspec *flagspec_new(void){
     s->last = 0;
 
     /* alloc the longname record */
-    s->rec_longname = matchlist_new();
-    if(s->rec_longname == NULL) return NULL;
+    s->longname_record = matchset_new();
+    if(s->longname_record == NULL) return NULL;
     /* alloc the identifier record */
-    s->rec_identifier = matchlist_new();
-    if(s->rec_identifier == NULL) return NULL;
+    s->identifier_record = matchset_new();
+    if(s->identifier_record == NULL) return NULL;
 
     /* alloc the strpool_pool */
     s->strpool_pool = malloc(FLAGSPEC_STRPOOL_POOL_SIZE_INIT * sizeof(struct strpool));
@@ -111,7 +111,7 @@ int flagspec_next(struct flagspec *spec){
         char *str_allocd; \
         \
         /* check if unique in flagspec */ \
-        if(match_find(FIELD, spec->rec_##FIELD) != MATCH_NOTFOUND) \
+        if(matchset_contains(spec->FIELD##_record, FIELD)) \
             return FLAGSPEC_EXIST; \
         /* check if not already set */ \
         if(spec->stor[spec->last].FIELD != NULL) \
@@ -121,7 +121,7 @@ int flagspec_next(struct flagspec *spec){
         if(str_allocd == NULL) return FLAGSPEC_NOMEM; \
         \
         /* add to longname_rec and set in last */ \
-        if(matchlist_append(spec->rec_##FIELD, str_allocd, spec->last) == MATCHLIST_NOMEM) \
+        if(matchset_insert(spec->FIELD##_record, str_allocd) == MATCHSET_NOMEM) \
             return FLAGSPEC_NOMEM; \
         spec->stor[spec->last].FIELD = str_allocd; \
         \
@@ -132,14 +132,14 @@ FLAGSPEC_SET_UNIQ_TEXT_FIELD_FN_DEFINE(identifier)
 
 int flagspec_set_shortname(struct flagspec *spec, char shortname){
     /* check if unique in flagspec */
-    if(spec->rec_shortname[shortname - FLAGSHORT_OFF] > 0)                   
+    if(spec->shortname_record[shortname - FLAGSHORT_OFF] > 0)                   
         return FLAGSPEC_EXIST;
     /* check if not already set */
     if(spec->stor[spec->last].shortname != FLAGSHORT_NULL) 
         return FLAGSPEC_FILLD;
 
     /* add to shortname_rec and set in last */ 
-    spec->rec_shortname[shortname - FLAGSHORT_OFF] = spec->last + 1;
+    spec->shortname_record[shortname - FLAGSHORT_OFF] = spec->last + 1;
     spec->stor[spec->last].shortname = shortname;
     return FLAGSPEC_OK;
 }
@@ -177,8 +177,8 @@ void flagspec_free(struct flagspec *spec){
     /* free the main storage */
     free(spec->stor);
     /* free the records */
-    matchlist_free(spec->rec_longname);
-    matchlist_free(spec->rec_identifier);
+    matchset_free(spec->longname_record);
+    matchset_free(spec->identifier_record);
     
     /* free every strpool and the pool pool itself */
     for(gonfsize_t i = 0; i <= spec->strpool_pool_last; i++){
