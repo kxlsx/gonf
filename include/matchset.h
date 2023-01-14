@@ -24,9 +24,7 @@ struct matchset{
     gonfsize_t stor_size;
 };
 
-/* Allocate a new, empty matchset of size size_init.
- * It's recommended to pick a prime just below a power of 2.
- */
+/* Allocate a new, empty matchset */
 struct matchset *matchset_new();
 /* Free all memory associated with the given matchset. */
 void matchset_free(struct matchset *self);
@@ -48,7 +46,6 @@ int matchset_insert(struct matchset *self, char *item);
  *  a boolean value.
  */
 bool matchset_contains(struct matchset *self, char *item);
-
 
 /* ================= */
 #endif

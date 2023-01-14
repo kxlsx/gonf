@@ -13,11 +13,29 @@ static uint32_t hash_crc32(char *input){
     h = 0;
     while(*input != '\0'){
         /* I'm not explaining myself. */
-        __asm__(
-            "crc32b (%%rbx), %%rax"
-            : "=a" (h)
-            : "a" (h), "b" (input)
-        );
+        #if defined(__x86_64__) \
+        || defined(_M_X64) 
+            __asm__(
+                "crc32b (%%rbx), %%eax"
+                : "=a" (h)
+                : "a" (h), "b" (input)
+            );
+        #elif defined(i386) \
+        || defined(__i386__) \
+        || defined(__i386) \
+        || defined(_M_IX86)
+            __asm__(
+                "crc32b (%%ebx), %%eax"
+                : "=a" (h)
+                : "a" (h), "b" (input)
+            );
+        #else
+            uint32_t highorder;
+            highorder = h & 0xf8000000;  
+            h <<= 5;
+            h ^= (highorder >> 27);
+            h ^= *input;   
+        #endif
         input++;
     }
     return h;
@@ -99,7 +117,7 @@ static int matchset_realloc(struct matchset *self, gonfsize_t new_size){
     return MATCHSET_OK;
 }
 
-/* Resize the set if its significantly filled up. */
+/* Resize the set storage if its significantly filled up. */
 static int matchset_optimize(struct matchset *self){
     double fill_coefficient;
     gonfsize_t new_size;
