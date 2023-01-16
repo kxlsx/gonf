@@ -1,3 +1,5 @@
 .vscode/
 src/pre/
 output/
+utils/
+tests/big.gonf

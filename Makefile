@@ -1,36 +1,10 @@
-# generic_c_makefile v1.0.1 (modified)
+# generic_c_makefile v1.1.0 (modified)
 # Łukasz Dragon <lukasz.b.dragon@gmail.com>
+# https://gist.github.com/kxlsx/c29127d75136a832f029aaae1a897213
+#
 # This is free software. You may redistribute copies of it under the terms of
 # the GNU General Public License <https://www.gnu.org/licenses/gpl.html>.
 # There is NO WARRANTY, to the extent permitted by law.
-#
-# Template Makefile for C projects that works on *nix and on Windows
-# Although by default it's set to use gcc, you should be able to quickly
-# set it up for any language's compiler.
-#
-# USAGE: 
-# make             -> Build executable with CFLAGS_DEBUG.
-# make run         -> Build executable with CFLAGS_DEBUG, then run it.
-# make release     -> Build executable with CFLAGS_RELEASE.
-# make release run -> Build executable with CFLAGS_RELEASE, then run it.
-# make clean       -> Remove everything in OUTPUT_DIR
-# Use the environment variable ARGS to pass arguments to 'run'.
-#
-# GENERIC BEHAVIOUR:
-# Use CC to compile every file with the SRC_SUFFIX in SRC_DIR,
-# passing flags:
-#     * CFLAGS
-#     * CFLAGS_DEBUG or CFLAGS_RELEASE
-#     * CFLAG_INCLUDE followed by INCLUDE_DIRS
-#     * CFLAG_OUTPUT
-# and putting the resulting .OBJ_SUFFIX files into OBJ_DIR.
-# Then link the files in OBJ_DIR using LD with flags:
-#     * LDFLAGS
-#     * LDFLAGS_DEBUG or LDFLAGS_RELEASE
-#     * LDFLAG_LIBDIR followed by LIB_DIRS
-#     * LDFLAG_LIB followed by LIBS
-#     * LDFLAG_OUTPUT
-# into a file called EXEC_NAME in OUTPUT_DIR.
 
 # ========= config =========
 # compiler
@@ -125,6 +99,9 @@ CFLAGS   := $(CFLAGS_DEBUG) $(CFLAGS)
 LDFLAGS  := $(LDFLAGS_DEBUG) $(LDFLAGS)
 LEXFLAGS := $(LEXFLAGS_DEBUG) $(LEXFLAGS)
 endif
+CFLAGS   := $(CFLAGS) $(CFLAGS_OPT)
+LDFLAGS  := $(LDFLAGS) $(LDFLAGS_OPT)
+LEXFLAGS := $(LEXFLAGS) $(LEXFLAGS_OPT)
 
 all: $(EXEC)
 	@echo Building complete.
@@ -162,8 +139,7 @@ $(LEXYY): $(LEX_SRCS) | $(PRE_DIR)
 
 # Dump everything in $(RES_DIR) into c style variables in $(HEXDUMP)
 $(HEXDUMP): $(RESS) | $(PRE_DIR)
-	@echo "/* Generated from: $(RESS) */" >$(HEXDUMP)
-	$(foreach RES,$(RESS),$(HEXDUMPER) $(HEXDUMPER_FLAGS) $(RES) >> $(HEXDUMP);)
+	$(foreach RES,$(RESS),$(HEXDUMPER) $(HEXDUMPER_FLAGS) $(RES) >> $(HEXDUMP) &&) echo
 
 $(PRE_DIR):
 	$(MKDIR) $(call FIXPATH,$(PRE_DIR))
