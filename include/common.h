@@ -32,12 +32,18 @@ typedef int gonfsize_t;
     "the GNU General Public License <https://www.gnu.org/licenses/gpl.html>.\n"     \
     "There is NO WARRANTY, to the extent permitted by law."
 
-#define eprintf(FMT, ...) fprintf(stderr, FMT, ## __VA_ARGS__)
-#define eprintf_gonf(FMT, ...) eprintf(NAME ": " FMT, ## __VA_ARGS__)
-
 /* stringize macro result */
 #define XSTR(S) STR(S)
 #define STR(S) #S
+
+#ifdef _STDIO_H
+#define eprintf(FMT, ...) fprintf(stderr, FMT, ## __VA_ARGS__)
+#define eprintf_gonf(FMT, ...) eprintf(NAME ": " FMT, ## __VA_ARGS__)
+#endif
+
+#ifdef _STRING_H
+#define streq(A, B) (strcmp(A, B) == 0)
+#endif
 
 /* ================= */
 #endif

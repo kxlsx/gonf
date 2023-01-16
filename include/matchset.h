@@ -7,9 +7,9 @@
 #endif
 
 /* matchset return values */
-#define MATCHSET_OK     OK
-#define MATCHSET_NOMEM  ERR_NOMEM
-#define MATCHSET_EXISTS 2
+#define MATCHSET_OK         OK
+#define MATCHSET_ERR_NOMEM  ERR_NOMEM
+#define MATCHSET_ERR_EXISTS 2
 
 /* List of items having the same hash in the matchset. */
 struct matchset_node{

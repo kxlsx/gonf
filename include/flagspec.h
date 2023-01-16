@@ -44,6 +44,13 @@ struct strpool{
     gonfsize_t len;
 };
 
+/* A dynamic array of strpools */
+struct strpool_pool{
+    struct strpool *stor;
+    gonfsize_t size;
+    gonfsize_t len;
+};
+
 /* Struct containing the collected
  * metadata about a set of flags.
  */
@@ -51,9 +58,7 @@ struct flagspec{
     struct flaginfo *stor;
     struct matchset *longname_record;
     struct matchset *identifier_record;
-    struct strpool *strpool_pool;
-    gonfsize_t strpool_pool_size;
-    gonfsize_t strpool_pool_last;
+    struct strpool_pool strpools;
     flagc_t size;
     flagc_t last;
     flagc_t shortname_record[FLAGSHORT_MAX];
