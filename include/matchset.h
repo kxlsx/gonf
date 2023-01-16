@@ -6,10 +6,8 @@
 #include <common.h>
 #endif
 
-/* matchset return values */
-#define MATCHSET_OK         OK
-#define MATCHSET_ERR_NOMEM  ERR_NOMEM
-#define MATCHSET_ERR_EXISTS 2
+/* Value returned by matchset_insert if the item exists in the set. */
+#define MATCHSET_ERR_EXISTS 16
 
 /* List of items having the same hash in the matchset. */
 struct matchset_node{
@@ -32,11 +30,11 @@ void matchset_free(struct matchset *self);
 /* Try to insert a string into the matchset.
  *
  * RETURNS:
- *  MATCHSET_OK
+ *  OK
  *  or
- *  MATCHSET EXISTS - if the string exists in the matchset
+ *  MATCHSET_EXISTS - if the string exists in the matchset
  *  or
- *  MATCHSET NOMEM
+ *  ERR_NOMEM
  */
 int matchset_insert(struct matchset *self, char *item);
 

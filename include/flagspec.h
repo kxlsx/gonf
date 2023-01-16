@@ -10,10 +10,8 @@
 #endif
 
 /* flagspec return values. */
-#define FLAGSPEC_OK    OK
-#define FLAGSPEC_NOMEM ERR_NOMEM
-#define FLAGSPEC_EXIST 2
-#define FLAGSPEC_FILLD 3
+#define FLAGSPEC_EXIST 16
+#define FLAGSPEC_FILLD 17
 
 typedef gonfsize_t flagc_t;
 
@@ -79,9 +77,9 @@ void flagspec_free(struct flagspec *spec);
 /* Change flagspec's current flag to the next one. 
  * 
  * RETURNS:
- *  FLAGSPEC_OK 
+ *  OK 
  *  or
- *  FLAGSPEC_NOMEM
+ *  ERR_NOMEM
  */
 int flagspec_next(struct flagspec *spec);
 
@@ -90,7 +88,7 @@ int flagspec_next(struct flagspec *spec);
  * RETURNS:
  *  FLAGSPEC_OK 
  *  or
- *  FLAGSPEC_EXIST | FLAGSPEC_FILLD | FLAGSPEC_NOMEM - on error
+ *  FLAGSPEC_EXIST | FLAGSPEC_FILLD | ERR_NOMEM
  */
 int flagspec_set_longname(struct flagspec *spec, char *longname, gonfsize_t len);
 int flagspec_set_identifier(struct flagspec *spec, char *identifier, gonfsize_t len);

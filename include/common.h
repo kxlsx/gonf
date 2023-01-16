@@ -8,7 +8,7 @@
 
 typedef int gonfsize_t;
 
-/* Return values. */
+/* Return values (must be <= 15)*/
 #define OK          0
 #define ERR_NOMEM   1
 #define ERR_PARSE   2
@@ -36,11 +36,13 @@ typedef int gonfsize_t;
 #define XSTR(S) STR(S)
 #define STR(S) #S
 
+/* stdio utils */
 #ifdef _STDIO_H
 #define eprintf(FMT, ...) fprintf(stderr, FMT, ## __VA_ARGS__)
 #define eprintf_gonf(FMT, ...) eprintf(NAME ": " FMT, ## __VA_ARGS__)
 #endif
 
+/* string utils */
 #ifdef _STRING_H
 #define streq(A, B) (strcmp(A, B) == 0)
 #endif

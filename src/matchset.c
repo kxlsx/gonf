@@ -3,6 +3,7 @@
 #include <inttypes.h>
 
 #include <matchset.h>
+#include <common.h>
 
 #define MATCHSET_SIZE_INIT 16
 #define MATCHSET_MAX_FILL_COEFFICIENT 0.7
@@ -78,11 +79,11 @@ static int matchset_fill_node(struct matchset_node *stor, gonfsize_t stor_size, 
 
         item_node = matchset_add_node(item_node);
         if(item_node == NULL)
-            return MATCHSET_ERR_NOMEM;
+            return ERR_NOMEM;
     }
 
     item_node->item = item;
-    return MATCHSET_OK;
+    return OK;
 }
 
 /* Free internal set storage. */
@@ -110,15 +111,15 @@ static int matchset_realloc(struct matchset *set, gonfsize_t new_size){
 
     new_stor = calloc(new_size, sizeof(struct matchset_node));
     if(new_stor == NULL) 
-        return MATCHSET_ERR_NOMEM;
+        return ERR_NOMEM;
 
     for(gonfsize_t i = 0; i < set->stor_size; i++){
         tocopy_node = set->stor + i;
         if(tocopy_node->item == MATCHSET_NOITEM) 
             continue;
         do{
-            if(matchset_fill_node(new_stor, new_size, tocopy_node->item) == MATCHSET_ERR_NOMEM)
-                return MATCHSET_ERR_NOMEM;
+            if(matchset_fill_node(new_stor, new_size, tocopy_node->item) == ERR_NOMEM)
+                return ERR_NOMEM;
             tocopy_node = tocopy_node->next;
         }while(tocopy_node != NULL);
     }
@@ -128,7 +129,7 @@ static int matchset_realloc(struct matchset *set, gonfsize_t new_size){
     /* set new storage */
     set->stor = new_stor;
     set->stor_size = new_size;
-    return MATCHSET_OK;
+    return OK;
 }
 
 /* Resize the set storage if its significantly filled up. */
@@ -137,12 +138,14 @@ static int matchset_optimize(struct matchset *set){
     gonfsize_t new_size;
 
     fill_coefficient = (double)(set->len) / set->stor_size;
-    if(fill_coefficient < MATCHSET_MAX_FILL_COEFFICIENT) return MATCHSET_OK;
+    if(fill_coefficient < MATCHSET_MAX_FILL_COEFFICIENT)
+        return OK;
 
     new_size = set->stor_size * 2;
-    if(matchset_realloc(set, new_size) == MATCHSET_ERR_NOMEM) return MATCHSET_ERR_NOMEM;
+    if(matchset_realloc(set, new_size) == ERR_NOMEM)
+        return ERR_NOMEM;
 
-    return MATCHSET_OK;
+    return OK;
 }
 
 struct matchset *matchset_new(){
@@ -187,16 +190,16 @@ int matchset_insert(struct matchset *set, char *item){
     int ret;
 
     ret = matchset_optimize(set);
-    if(ret != MATCHSET_OK)
+    if(ret != OK)
         return ret;
 
     ret = matchset_fill_node(set->stor, set->stor_size, item);
-    if(ret != MATCHSET_OK) 
+    if(ret != OK) 
         return ret;
 
     set->len++;
     
-    return MATCHSET_OK;
+    return OK;
 }
 
 void matchset_free(struct matchset *set){

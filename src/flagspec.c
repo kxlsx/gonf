@@ -14,7 +14,7 @@
     ((POOL_POOL).stor + ((POOL_POOL).len - 1))
 
 /* Allocate a new strpool_pool and and the first pool within it. */
-static struct strpool_pool strpool_pool_new(){
+static struct strpool_pool strpool_pool_new(void){
     struct strpool_pool strpools;
 
     strpools.stor = malloc(FLAGSPEC_STRPOOL_POOL_SIZE_INIT * sizeof(struct strpool));
@@ -124,7 +124,7 @@ int flagspec_next(struct flagspec *spec){
     if(spec->last == spec->size){
         spec->size *= 2;
         tmp = realloc(spec->stor, spec->size * sizeof(struct flaginfo));
-        if(tmp == NULL) return FLAGSPEC_NOMEM;
+        if(tmp == NULL) return ERR_NOMEM;
 
         spec->stor = tmp;
         /* set the newly allocated space to zeroes */
@@ -134,7 +134,7 @@ int flagspec_next(struct flagspec *spec){
             (spec->size - spec->last) * sizeof(struct flaginfo)
         );
     }
-    return FLAGSPEC_OK;
+    return OK;
 }
 
 /* Macro to define a function trying to set a unique text field 
@@ -152,14 +152,14 @@ int flagspec_next(struct flagspec *spec){
             return FLAGSPEC_FILLD; \
         \
         str_allocd = flagspec_alloc_str(spec, FIELD, len); \
-        if(str_allocd == NULL) return FLAGSPEC_NOMEM; \
+        if(str_allocd == NULL) return ERR_NOMEM; \
         \
         /* add to the FIELD_record and set in last */ \
-        if(matchset_insert(spec->FIELD##_record, str_allocd) == MATCHSET_ERR_NOMEM) \
-            return FLAGSPEC_NOMEM; \
+        if(matchset_insert(spec->FIELD##_record, str_allocd) == ERR_NOMEM) \
+            return ERR_NOMEM; \
         spec->stor[spec->last].FIELD = str_allocd; \
         \
-        return FLAGSPEC_OK; \
+        return OK; \
     }
 FLAGSPEC_SET_UNIQ_TEXT_FIELD_FN_DEFINE(longname)
 FLAGSPEC_SET_UNIQ_TEXT_FIELD_FN_DEFINE(identifier)
@@ -175,7 +175,7 @@ int flagspec_set_shortname(struct flagspec *spec, char shortname){
     /* add to the shortname_record and set in last */ 
     spec->shortname_record[shortname - FLAGSHORT_OFF] = spec->last + 1;
     spec->stor[spec->last].shortname = shortname;
-    return FLAGSPEC_OK;
+    return OK;
 }
 
 int flagspec_set_description(struct flagspec *spec, char *description, gonfsize_t len){
@@ -186,25 +186,25 @@ int flagspec_set_description(struct flagspec *spec, char *description, gonfsize_
         return FLAGSPEC_FILLD;
 
     str_allocd = flagspec_alloc_str(spec, description, len);
-    if(str_allocd == NULL) return FLAGSPEC_NOMEM;
+    if(str_allocd == NULL) return ERR_NOMEM;
 
     spec->stor[spec->last].description = str_allocd;
-    return FLAGSPEC_OK;
+    return OK;
 }
 
 int flagspec_set_value(struct flagspec *spec, char *value, gonfsize_t len){
     char *str_allocd;
 
     str_allocd = flagspec_alloc_str(spec, value, len);
-    if(str_allocd == NULL) return FLAGSPEC_NOMEM;
+    if(str_allocd == NULL) return ERR_NOMEM;
 
     spec->stor[spec->last].value = str_allocd;
-    return FLAGSPEC_OK;
+    return OK;
 }
 
 int flagspec_set_is_value(struct flagspec *spec, bool is_value){
     spec->stor[spec->last].is_value = is_value;
-    return FLAGSPEC_OK;
+    return OK;
 }
 
 void flagspec_free(struct flagspec *spec){

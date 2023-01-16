@@ -71,7 +71,10 @@ STR \"(\\.|[^\0"\\])*\"
 
     last_lf = yyleng;
     for(lexsize_t i = 0; i < yyleng; i++){
-        if(yytext[i] == '\n') LINE_NEXT(1); last_lf = i;
+        if(yytext[i] == '\n'){
+            LINE_NEXT(1); 
+            last_lf = i;
+        }
     }
     COL_NEXT(yyleng - last_lf);
 
@@ -109,7 +112,8 @@ STR \"(\\.|[^\0"\\])*\"
     BEGIN(ERROR);
 }
 <ERROR>[[:graph:]]+[\n\t\r\f ] {
-    if(yytext[yyleng - 1] == '\n') LINE_NEXT(1);
+    if(yytext[yyleng - 1] == '\n') 
+        LINE_NEXT(1);
 
     LEXGONF_LVAL_SET_TEXT(yytext, yyleng - 1);
     BEGIN(INITIAL);
