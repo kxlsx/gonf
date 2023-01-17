@@ -22,7 +22,7 @@ typedef int gonfsize_t;
 #define NAME \
     "gonf"
 #define VERSION \
-    "0.3.1"
+    "0.4.0"
 #define DESCRIPTION \
     "Generate programs that parse command line flags."
 #define AUTHORS \

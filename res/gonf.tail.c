@@ -218,13 +218,12 @@ const char *gonferror_value(void){
 }
 
 int gonferror_print(void){
-    switch (gonf_err.errid)
-    {
+    switch (gonf_err.errid){
     case GONFERR_NOMEM:
         eprintf("failed to allocate memory.\n");
         break;
     case GONFERR_NOFLAG:
-        eprintf("no flag name provided after '%.*s'\n", gonf_err.value_len, gonf_err.value);
+        eprintf("no flag name provided after '%.*s'.\n", gonf_err.value_len, gonf_err.value);
         break;
     case GONFERR_UNKNFLAG:
         eprintf("unrecognized flag '%.*s'.\n", gonf_err.value_len, gonf_err.value);
@@ -233,7 +232,7 @@ int gonferror_print(void){
         eprintf("flag '%.*s' does not take a value.\n", gonf_err.value_len, gonf_err.value);
         break;
     case GONFERR_NOVAL:
-        eprintf("no value provided for '%.*s'\n", gonf_err.value_len, gonf_err.value);
+        eprintf("no value provided for '%.*s'.\n", gonf_err.value_len, gonf_err.value);
         break;
     default:
         break;

@@ -12,9 +12,6 @@
 #define PRINT_ERR_NOMEM { \
     eprintf_gonf("failed to allocate memory.\n"); \
 }
-#define PRINT_ERR_NOFLAGS { \
-    eprintf_gonf("input files contain zero flags.\n"); \
-}
 #define PRINT_ERR_UNIQ { \
     eprintf_gonf("output and header-file must be different.\n"); \
 }
@@ -101,7 +98,7 @@ static int set_infiles(struct filearr **infiles, char **args){
 static int set_outfile(struct file *outfile){
     if(gonflag_is_present(GONFLAG_OUTPUT)){
         *outfile = file_new(
-            gonflag_get_field(GONFLAG_OUTPUT, value), 
+            gonflag_get_value(GONFLAG_OUTPUT), 
             "w"
         );
     }else{
@@ -120,7 +117,7 @@ static int set_outfile(struct file *outfile){
 static int set_header_outfile(struct file *header_outfile, char *outfile_path){
     char *header_outfile_path;
 
-    header_outfile_path = gonflag_get_field(GONFLAG_HEADER, value);
+    header_outfile_path = gonflag_get_value(GONFLAG_HEADER);
     if(!gonflag_is_present(GONFLAG_STDOUT)
     && streq(header_outfile_path, outfile_path)){
         PRINT_ERR_UNIQ;

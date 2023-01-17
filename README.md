@@ -172,7 +172,7 @@ Specific flags can be obtained by passing their:
  * shortname *(`gonflag_get_by_short`)*
  * longname *(`gonflag_get_by_long`)*
 
-Additional documentation as well as helper macros 
+Additional documentation as well as some helper macros 
 are provided in the *(optional)* generated header file.
 
 ### Example
@@ -204,10 +204,10 @@ if(flag->count)
     printf("%s\n", flag->value);
 
 /* Print a flag's value using helper macros
- * (will be set to default value if none was provided).
+ * (will be set to default_value if none was provided).
  */
 if(gonflag_is_present(GONFLAG_MCFLUNGUS))
-    printf("%s\n", gonflag_get_field(GONFLAG_MCFLUNGUS, value));
+    printf("%s\n", gonflag_get_value(GONFLAG_MCFLUNGUS));
 ```
 
 ## Contributing
