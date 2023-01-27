@@ -107,12 +107,14 @@ struct gonflag *gonflag_get_by_long(const char *longname);
  * 
  * RETURNS:
  *  A mallocd array terminated by a NULL pointer
- *  containing non-flag args found when parsing.
+ *  containing non-flag args found when parsing
+ *  or
+ *  NULL
  *  
  * ERRORS:
  *  On error, the function will terminate parsing
- *  immediately and set the gonferr variable to
- *  an appropriate value.
+ *  immediately, return NULL and 
+ *  set the gonferr variable to an appropriate value.
  *  In order to access the error value,
  *  use the gonferror* functions.
  * 

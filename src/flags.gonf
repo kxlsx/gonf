@@ -1,17 +1,17 @@
-LICENSE: -L --license "Print license information.";
-VERSION: -V --version "Print version.";
-HELP:    -h --help    "Print this message.";
+LICENSE: -L --license "print license information.";
+VERSION: -V --version "print version.";
+HELP:    -h --help    "print this message.";
 
 STDOUT:
     -t --stdout
-    "Write parser to stdout.";
+    "write parser to stdout.";
 
 OUTPUT:
     -o --output
-    "Specify output filename."
+    "specify output filename."
     =;
 
 HEADER:  
     -H --header-file 
-    "Create a C header file in addition to the parser."
+    "create a C header file in addition to the parser."
     = "gonf.h";

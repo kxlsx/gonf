@@ -1,6 +1,5 @@
-// TODO: better README
-// TODO: manpage?
 // TODO: maybe do configurable prefix?
+// TODO: replace xxd with something better.
 
 int process_args(int argc, char **argv);
 int main(int argc, char **argv){

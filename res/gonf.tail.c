@@ -159,7 +159,10 @@ char **gonfparse(gonfc_t argc, char **argv){
             flag = (*(argv[i]) == '-') ?
                 gonf_parse_long(++(argv[i])) :
                 gonf_parse_short(argv[i]);
-            if(flag == NULL) break;
+            if(flag == NULL){
+                free(args_ret.stor);
+                return NULL;
+            }
 
             value_state = (flag->is_value && flag->value == NULL) ?
                 ((flag->default_value == NULL) ? REQUIRED : OPTIONAL) : 
@@ -174,7 +177,7 @@ char **gonfparse(gonfc_t argc, char **argv){
                     args_ret.stor = realloc(args_ret.stor, args_ret.size + 1);
                     if(args_ret.stor == NULL){
                         gonf_err_set(GONFERR_NOMEM, NULL, 0);
-                        break;
+                        return NULL;
                     }
                 }
                 args_ret.stor[args_ret.len] = argv[i];
@@ -189,7 +192,8 @@ char **gonfparse(gonfc_t argc, char **argv){
         }else{
             gonf_err_set(GONFERR_NOVAL, &(flag->shortname), 1);
         }
-        break;
+        free(args_ret.stor);
+        return NULL;
     case OPTIONAL:
         flag->value = flag->default_value;
         break;

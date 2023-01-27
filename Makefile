@@ -7,6 +7,10 @@
 # There is NO WARRANTY, to the extent permitted by law.
 
 # ========= config =========
+# install prefixes
+EXEC_INSTALL_DIR := /usr/local/bin
+MAN_INSTALL_DIR  := /usr/local/share/man
+
 # compiler
 CC := gcc -c
 CFLAGS         := -march=native -Wall -Wextra -Wundef
@@ -49,11 +53,14 @@ OBJ_DIR      := $(OUTPUT_DIR)/obj
 INCLUDE_DIRS := include
 LIB_DIRS     := 
 LIBS         :=
+MAN_DIR      := man
 
 HEXDUMP_NAME := gonf_dump.c
 LEXYY_NAME   := lex.yy.c
 
 EXEC_NAME := gonf
+
+MAN_PREFIX := $(EXEC_NAME)
 # ========= endconfig =========
 
 ifeq ($(OS),Windows_NT)
@@ -88,7 +95,7 @@ INCLUDES := $(addprefix $(CFLAG_INCLUDE),$(INCLUDE_DIRS))
 LIB_DIRS := $(addprefix $(LDFLAG_LIBDIR),$(LIB_DIRS))
 LIBS     := $(addprefix $(LDFLAG_LIB),$(LIBS))
 
-.PHONY: all release run clean
+.PHONY: all release run clean install install-man install-exec uninstall
 
 ifneq (,$(findstring release,$(MAKECMDGOALS)))
 CFLAGS    := $(CFLAGS_RELEASE) $(CFLAGS)
@@ -117,6 +124,30 @@ clean:
 	$(RM) $(call FIXPATH,$(PRE_DIR))
 	@echo Cleaning complete.
 
+ifneq ($(OS),Windows_NT)
+install: all install-man install-exec
+	@echo Installation complete.
+
+install-man:
+	chmod 644 $(MAN_DIR)/*.gz
+	chown root:root $(MAN_DIR)/*.gz
+	$(foreach MAN,$(wildcard $(MAN_DIR)/*.gz), \
+		mkdir -p $(MAN_INSTALL_DIR)/man$(subst .,,$(suffix $(subst .gz,,$(MAN)))) && \
+		cp $(MAN) $(MAN_INSTALL_DIR)/man$(subst .,,$(suffix $(subst .gz,,$(MAN)))/;))
+	mandb 1> /dev/null
+install-exec:
+	chmod 755 $(EXEC)
+	chown root:root $(EXEC)
+	mkdir -p $(EXEC_INSTALL_DIR)
+	mv $(EXEC) $(EXEC_INSTALL_DIR)/
+
+uninstall:
+	rm -f $(EXEC_INSTALL_DIR)/$(EXEC_NAME)
+	$(foreach MAN,$(shell find $(MAN_INSTALL_DIR) -name $(MAN_PREFIX)*), \
+		rm -f $(MAN);)
+	mandb 1> /dev/null
+endif
+
 # Link OBJS.
 $(EXEC): $(OBJS)
 	$(LD) $(LDFLAGS) \
@@ -139,6 +170,7 @@ $(LEXYY): $(LEX_SRCS) | $(PRE_DIR)
 
 # Dump everything in $(RES_DIR) into c style variables in $(HEXDUMP)
 $(HEXDUMP): $(RESS) | $(PRE_DIR)
+	@echo // Generated from $(RESS) > $(HEXDUMP)
 	$(foreach RES,$(RESS),$(HEXDUMPER) $(HEXDUMPER_FLAGS) $(RES) >> $(HEXDUMP) &&) echo
 
 $(PRE_DIR):

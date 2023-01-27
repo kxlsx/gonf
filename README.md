@@ -2,7 +2,7 @@
 
 The flag parser generator.
 
-It utilizes a simple syntax to generate command line
+It utilizes a simple syntax to generate command-line
 flag parsers written in C.
 
 ## Building
@@ -25,7 +25,11 @@ make release   # build with release flags
 make run       # build and run
 make clean     # clean the output directory
 ```
-
+To install/uninstall (will only work on Linux)
+```bash
+sudo make release install   # build with release flags & install
+sudo make uninstall         # uninstall
+```
 ## Usage
 
 ### Basic usage:
@@ -58,7 +62,7 @@ IDENTIFIER: -SHORTNAME --LONGNAME "DESCRIPTION" = "DEFAULT_VALUE";
 ...
 ```
 where:
-* `IDENTIFIER` is a alphanumeric string.
+* `IDENTIFIER` is an alphanumeric string.
 * `SHORTNAME` is any ASCII character except `';"=-\`.
 * `LONGNAME` is a `SHORTNAME` followed by any string of characters except `';"=\`.
 * `DESCRIPTION` is any string of characters except `NUL`.
@@ -118,7 +122,7 @@ Finally, you can add some comments:
 ```
 HELP: -h --help "Print Help"; // single-line comment
 OUTPUT: -o =;
-/* mutliline
+/* multiline
             comment
             */
 MCFLUNGUS: --skrzat "psotnik" = "churbo";
@@ -144,7 +148,7 @@ as well as their descriptions.
 ### Basic usage:
 
 The main parser function is called `gonfparse`. 
-It scans the provided command line arguments for the
+It scans the provided command-line arguments for the
 specified flags, generating errors when:
  * an unrecognized flag has been encountered.
  * a value has been passed to a flag not accepting a value.
@@ -165,8 +169,8 @@ gonfc_t count;
 ```
 
 In order to then access a specific flag, 
-one needs to use the `gonflag_get` functions.
-Specific flags can be obtained by passing their:
+one needs to use the `gonflag_get` family of functions.
+Flags can be obtained by passing their:
  * index *(easily available with the `GONFLAG_INDEX` macro, 
  when an identifier has been specified)*
  * shortname *(`gonflag_get_by_short`)*
@@ -185,7 +189,6 @@ char **args;
 args = gonfparse(argc, argv);
 /* check for errors */
 if(gonferror() != GONFOK){
-    free(args);
     gonferror_print();
     return -1;
 }

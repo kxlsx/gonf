@@ -150,7 +150,6 @@ int process_args(int argc, char **argv){
             return ERR_NOMEM;
         }
         PRINT_ERR_CLI;
-        free(args_stor);
         return ERR_CLI;
     }
 
