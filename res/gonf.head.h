@@ -1,6 +1,6 @@
 #ifndef _GONF_H
 /* ================= */
-#ifndef _STDBOOL_H
+#if !(defined(_STDBOOL_H) || defined(_INC_STDBOOL))
 #include <stdbool.h>
 #endif
 

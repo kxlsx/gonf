@@ -2,7 +2,7 @@
 /* ================= */
 #define _COMP_H 1
 
-#ifndef _STDIO_H
+#if !(defined(_STDIO_H) || defined(_INC_STDIO))
 #include <stdio.h>
 #endif
 

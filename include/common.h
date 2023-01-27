@@ -2,7 +2,7 @@
 /* ================= */
 #define _COMMON_H 1
 
-#ifndef _STDBOOL_H
+#if !(defined(_STDBOOL_H) || defined(_INC_STDBOOL))
 #include <stdbool.h>
 #endif
 
@@ -37,13 +37,13 @@ typedef int gonfsize_t;
 #define STR(S) #S
 
 /* stdio utils */
-#ifdef _STDIO_H
+#if defined(_STDIO_H) || defined(_INC_STDIO)
 #define eprintf(FMT, ...) fprintf(stderr, FMT, ## __VA_ARGS__)
 #define eprintf_gonf(FMT, ...) eprintf(NAME ": " FMT, ## __VA_ARGS__)
 #endif
 
 /* string utils */
-#ifdef _STRING_H
+#if defined(_STRING_H) || defined(_INC_STRING)
 #define streq(A, B) (strcmp(A, B) == 0)
 #endif
 
