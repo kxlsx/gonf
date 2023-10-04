@@ -25,13 +25,6 @@ struct gonflag{
     const bool is_value;
 };
 
-/* Initial size of the dynamic array returned from
- * gonfparse. Change it if you expect a lot of non-flag args.
- */
-#define GONF_ARGS_SIZE_INIT 8
-
-#define eprintf(FMT, ...) fprintf(stderr, FMT, ## __VA_ARGS__)
-
 struct gonf_matchlist{
     const gonfc_t index;
     const char *const match;

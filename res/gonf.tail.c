@@ -1,14 +1,60 @@
+#define eprintf(FMT, ...) fprintf(stderr, FMT, ## __VA_ARGS__)
+
 static struct {
     int errid;
     const char *value;
     gonfsize_t value_len;
 } gonf_err;
 
+/* Initial size of the dynamic array returned from
+ * gonfparse. Change it if you expect a lot of non-flag args.
+ */
+#define GONF_ARGS_SIZE_INIT 8
+
+static struct {
+    char **stor;
+    gonfc_t size;
+    gonfc_t len;
+} gonf_args;
+
 
 static void gonf_err_set(int errid, const char *v, gonfsize_t vlen){
     gonf_err.value = v;
     gonf_err.value_len = vlen;
     gonf_err.errid = errid;
+}
+
+static int gonf_args_init(){
+    gonf_args.len = 0;
+    gonf_args.size = GONF_ARGS_SIZE_INIT;
+    gonf_args.stor = malloc(GONF_ARGS_SIZE_INIT * sizeof(char **) + 1);
+    if(gonf_args.stor == NULL){
+        gonf_err_set(GONFERR_NOMEM, NULL, 0);
+        return GONFERR_NOMEM;
+    }
+    return GONFOK;
+}
+
+static int gonf_args_push(char *arg) {
+    if(gonf_args.len == gonf_args.size){
+        gonf_args.size = gonf_args.size * 2;
+        gonf_args.stor = realloc(gonf_args.stor, gonf_args.size);
+        if(gonf_args.stor == NULL){
+            gonf_err_set(GONFERR_NOMEM, NULL, 0);
+            return GONFERR_NOMEM;
+        }
+    }
+    gonf_args.stor[gonf_args.len] = arg;
+    gonf_args.len++;
+    return GONFOK;
+}
+
+static void gonf_args_free(void){
+    free(gonf_args.stor);
+}
+
+gonfc_t gonfargc(void){
+    return gonf_args.len;
 }
 
 struct gonflag *gonflag_get(gonfc_t flag_index){
@@ -96,7 +142,7 @@ static struct gonflag *gonf_parse_long(char *longflag){
     struct gonflag *flag;
     char *value;
 
-    if(*longflag == '\0' || *longflag == '='){
+    if(*longflag == '='){
         gonf_err_set(GONFERR_NOFLAG, "--", 2);
         return NULL;
     }
@@ -126,91 +172,82 @@ static struct gonflag *gonf_parse_long(char *longflag){
 }
 
 char **gonfparse(gonfc_t argc, char **argv){
-    struct{
-        char **stor;
-        gonfc_t size;
-        gonfc_t len;
-    } args_ret;
     enum{
-        NONE,
-        OPTIONAL,
-        REQUIRED,
-    }value_state;
+        DEFAULT,
+        VALUE_OPTIONAL,
+        VALUE_REQUIRED,
+        ARGS_ONLY,
+    }parse_state;
     struct gonflag *flag;
 
     gonf_err_set(GONFOK, NULL, 0);
 
-    args_ret.len = 0;
-    args_ret.size = GONF_ARGS_SIZE_INIT;
-    args_ret.stor = malloc(GONF_ARGS_SIZE_INIT * sizeof(char **) + 1);
-    if(args_ret.stor == NULL){
-        gonf_err_set(GONFERR_NOMEM, NULL, 0);
+    if(gonf_args_init() != GONFOK) 
         return NULL;
-    }
 
     flag = NULL;
-    value_state = NONE;
+    parse_state = DEFAULT;
     for(gonfc_t i = 0; i < argc; i++){
-        if(*(argv[i]) == '-'){
-            if(value_state == REQUIRED) break;
-            if(value_state == OPTIONAL) flag->value = flag->default_value;
+        if(parse_state != ARGS_ONLY && *(argv[i]) == '-'){
+            if(parse_state == VALUE_REQUIRED) break;
+            if(parse_state == VALUE_OPTIONAL) flag->value = flag->default_value;
 
             argv[i]++;
-            flag = (*(argv[i]) == '-') ?
-                gonf_parse_long(++(argv[i])) :
-                gonf_parse_short(argv[i]);
+            if(*(argv[i]) == '-') {
+                argv[i]++;
+
+                if(*argv[i] == '\0') {
+                    parse_state = ARGS_ONLY;
+                    continue;
+                }
+
+                flag = gonf_parse_long(argv[i]);
+            }else {
+                flag = gonf_parse_short(argv[i]);
+            }
+
             if(flag == NULL){
-                free(args_ret.stor);
+                gonf_args_free();
                 return NULL;
             }
 
-            value_state = (flag->is_value && flag->value == NULL) ?
-                ((flag->default_value == NULL) ? REQUIRED : OPTIONAL) : 
-                NONE;
+            if(flag->is_value && flag->value == NULL){
+                if(flag->default_value == NULL)
+                    parse_state = VALUE_REQUIRED;
+                else 
+                    parse_state = VALUE_OPTIONAL;
+            } else {
+                parse_state = DEFAULT;
+            }
         }else{
-            if(value_state != NONE){
+            switch (parse_state){
+            case VALUE_REQUIRED: case VALUE_OPTIONAL:
                 flag->value = argv[i];
-                value_state = NONE;
-            }else{
-                if(args_ret.len == args_ret.size){
-                    args_ret.size = args_ret.size * 2 - 1;
-                    args_ret.stor = realloc(args_ret.stor, args_ret.size + 1);
-                    if(args_ret.stor == NULL){
-                        gonf_err_set(GONFERR_NOMEM, NULL, 0);
-                        return NULL;
-                    }
-                }
-                args_ret.stor[args_ret.len] = argv[i];
-                args_ret.len++;
+                parse_state = DEFAULT;
+                break;
+            default:
+                if(gonf_args_push(argv[i]) != GONFOK)
+                    return NULL;
+                break;
             }
         }
     }
-    switch(value_state){
-    case REQUIRED:
+    switch(parse_state){
+    case VALUE_REQUIRED:
         if(flag->longname != NULL){
             gonf_err_set(GONFERR_NOVAL, flag->longname, strlen(flag->longname));
         }else{
             gonf_err_set(GONFERR_NOVAL, &(flag->shortname), 1);
         }
-        free(args_ret.stor);
+        gonf_args_free();
         return NULL;
-    case OPTIONAL:
+    case VALUE_OPTIONAL:
         flag->value = flag->default_value;
         break;
     default: break;
     }
 
-    args_ret.stor[args_ret.len] = NULL;
-    return args_ret.stor;
-}
-
-gonfc_t gonfargc(char **gonfargs){
-    gonfc_t argc;
-
-    argc = 0;
-    while(*(gonfargs++) != NULL) argc++;
-
-    return argc;
+    return gonf_args.stor;
 }
 
 int gonferror(void){

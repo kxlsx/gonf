@@ -106,8 +106,10 @@ struct gonflag *gonflag_get_by_long(const char *longname);
  * set to a GONFERR_* value.
  * 
  * RETURNS:
- *  A mallocd array terminated by a NULL pointer
- *  containing non-flag args found when parsing
+ *  A mallocd array containing 
+ *  non-flag args found while parsing.
+ *  The length of the array can be accesed 
+ *  by using the gonfargc function.
  *  or
  *  NULL
  *  
@@ -127,7 +129,7 @@ struct gonflag *gonflag_get_by_long(const char *longname);
 char **gonfparse(gonfc_t argc, char **argv);
 
 /* Return the number of arguments returned from gonfparse */
-gonfc_t gonfargc(char **gonfargs);
+gonfc_t gonfargc(void);
 
 /* Return the result of the last call to gonfparse.
  *

@@ -78,7 +78,7 @@ static void print_version(void){
 static int set_infiles(struct filearr **infiles, char **args){
     gonfc_t args_count;
 
-    args_count = gonfargc(args);
+    args_count = gonfargc() - 1;
 
     if(args_count == 0){
         *infiles = filearr_new_stdin();
@@ -96,6 +96,12 @@ static int set_infiles(struct filearr **infiles, char **args){
 }
 
 static int set_outfile(struct file *outfile){
+    /* the stdout flag always overwrites output */
+    if(gonflag_is_present(GONFLAG_STDOUT)){
+        *outfile = file_new_stdout();
+        return OK;
+    }
+
     if(gonflag_is_present(GONFLAG_OUTPUT)){
         *outfile = file_new(
             gonflag_get_value(GONFLAG_OUTPUT), 
@@ -106,10 +112,6 @@ static int set_outfile(struct file *outfile){
     }
     if((*outfile).handle == NULL)
         return ERR_FILE;
-    
-    /* the stdout flag always overwrites output */
-    if(gonflag_is_present(GONFLAG_STDOUT)) 
-        *outfile = file_new_stdout();
 
     return OK;
 }
