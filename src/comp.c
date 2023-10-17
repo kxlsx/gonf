@@ -1,5 +1,8 @@
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
 
 #include <comp.h>
 #include <parse.h>
@@ -9,6 +12,85 @@
 
 #define PRINT_ERR_NOFLAGS { \
     eprintf_gonf("input files contain zero flags.\n"); \
+}
+
+/* Convenience struct containing the lowercase and uppercase
+ * versions of the prefix.
+ */
+struct prefix_string{
+    char *upper;
+    char *lower;
+};
+
+/* Allocate a new prefix_string struct */
+static struct prefix_string *prefix_string_new(char *prefix){
+    struct prefix_string *prefix_str;
+    gonfsize_t prefix_size;
+    
+    prefix_str = malloc(sizeof(struct prefix_string));
+    if(prefix_str == NULL) 
+        return NULL;
+
+    prefix_size = strlen(prefix) + 1;
+
+    prefix_str->lower = malloc(prefix_size);
+    prefix_str->upper = malloc(prefix_size);
+    if(prefix_str->lower == NULL
+    || prefix_str->upper == NULL)
+        return NULL;
+
+    for(gonfsize_t i = 0; i < prefix_size - 1; i++){
+        prefix_str->lower[i] = tolower(prefix[i]);
+        prefix_str->upper[i] = toupper(prefix[i]);
+    }
+    prefix_str->lower[prefix_size - 1] = 
+    prefix_str->upper[prefix_size - 1] = '\0';
+
+    return prefix_str;
+}
+
+/* Free the memory associated with the passed prefix_string */
+static void prefix_string_free(struct prefix_string *prefix_str){
+    free(prefix_str->lower);
+    free(prefix_str->upper);
+    free(prefix_str);
+}
+
+/* Compile a template file.
+ * '$' is treated as a special character,
+ * that's always followed by one of these:
+ *  + 'p' - expand this to a lowercase prefix.
+ *  + 'P' - expand this to a uppercase prefix.
+ *  + 's' - stop compilation, and return the current position.
+ */
+static gonfsize_t compile_template(unsigned char template[], gonfsize_t template_size, FILE *outfile_handle, struct prefix_string prefix){
+    for(gonfsize_t i = 0; i < template_size; i++){
+        /* macro found */
+        if(template[i] == '$'){
+            i++;
+            switch(template[i]){
+            case 'p': /* lowercase prefix here */
+                fputs(prefix.lower, outfile_handle);
+                break;
+            case 'P': /* uppercase prefix here */
+                fputs(prefix.upper, outfile_handle);
+                break;
+            case 's': /* split file here */
+                return i + 1;
+            
+            /* enabled only when compiled with debug flags */
+            #ifndef __OPTIMIZE__
+            default:
+                eprintf("NO MACRO AFTER '$' AT BYTE %d", i);
+                return template_size;
+            #endif
+
+            }
+            continue;
+        }
+        fputc(template[i], outfile_handle);
+    }
+    return template_size;
 }
 
 static void compile_info_header(FILE *outfile_handle){
@@ -21,16 +103,20 @@ static void compile_info_header(FILE *outfile_handle){
  *  #define GONFLAG_INDEX(IDENTIFIER) GONFLAG_##IDENTIFIER
  *  #define GONFLAG_SAMPLE 0
  */
-static void compile_gonf_identifiers(struct flagspec *flags, FILE *outfile_handle){
+static void compile_identifiers(struct flagspec *flags, FILE *outfile_handle, struct prefix_string prefix){
     struct flaginfo flag;
 
-    fputs("#define GONFLAG_INDEX(IDENTIFIER) GONFLAG_##IDENTIFIER\n", outfile_handle);
+    fprintf(outfile_handle, 
+        "#define %sLAG_INDEX(IDENTIFIER) %sLAG_##IDENTIFIER\n",
+        prefix.upper, prefix.upper
+    );
     for(flagc_t flagi = 0; flagi < flagspec_len(flags); flagi++){
         flag = flagspec_at(flags, flagi);
         if(flag.identifier != NULL)
             fprintf(
                 outfile_handle, 
-                "#define GONFLAG_%s %d\n", 
+                "#define %sLAG_%s %d\n",
+                prefix.upper,
                 flag.identifier,
                 flagi
             );
@@ -38,8 +124,8 @@ static void compile_gonf_identifiers(struct flagspec *flags, FILE *outfile_handl
 }
 
 /* Compile the GONFLAGC macro. */
-static void compile_gonflagc(flagc_t flagspec_len, FILE *outfile_handle){
-    fprintf(outfile_handle, "\n#define GONFLAGC %d\n\n", flagspec_len);
+static void compile_flagc(flagc_t flagspec_len, FILE *outfile_handle, struct prefix_string prefix){
+    fprintf(outfile_handle, "\n#define %sLAGC %d\n\n", prefix.upper, flagspec_len);
 }
 
 /* Compile a multiline string into C format,
@@ -69,10 +155,13 @@ static void compile_multiline_str(char *str, FILE *outfile_handle){
  *  {"value", NULL, "sample", "sample", 0, 'g', true},
  * };
  */
-static void compile_gonf_flags(struct flagspec *flags, FILE *outfile_handle){
+static void compile_flags(struct flagspec *flags, FILE *outfile_handle, struct prefix_string prefix){
     struct flaginfo flag;
 
-    fputs("static struct gonflag gonf_flags[GONFLAGC] = {\n", outfile_handle);
+    fprintf(outfile_handle,
+        "static struct %slag %s_flags[%sLAGC] = {\n", 
+        prefix.lower, prefix.lower, prefix.upper
+    );
     for(flagc_t flagi = 0; flagi < flagspec_len(flags); flagi++){
         flag = flagspec_at(flags, flagi);
 
@@ -91,7 +180,7 @@ static void compile_gonf_flags(struct flagspec *flags, FILE *outfile_handle){
         fputs("0, ", outfile_handle);
 
         if(flag.shortname != FLAGSHORT_NULL) fprintf(outfile_handle, "'%c', ", flag.shortname);
-        else                                 fputs("GONFSHORT_NULL, ", outfile_handle);
+        else                                 fprintf(outfile_handle, "%sSHORT_NULL, ", prefix.upper);
 
         if(flag.is_value)                    fputs("true},\n", outfile_handle);
         else                                 fputs("false},\n", outfile_handle);
@@ -106,10 +195,13 @@ static void compile_gonf_flags(struct flagspec *flags, FILE *outfile_handle){
  *  [4] = 1,
  * };
  */
-static void compile_gonf_flags_by_short(struct flagspec *flags, FILE *outfile_handle){
+static void compile_flags_by_short(struct flagspec *flags, FILE *outfile_handle, struct prefix_string prefix){
     flagc_t shortn;
 
-    fputs("static const gonfc_t gonf_flags_by_short["XSTR(FLAGSHORT_MAX)"] = {\n", outfile_handle);\
+    fprintf(outfile_handle,
+        "static const %sc_t %s_flags_by_short["XSTR(FLAGSHORT_MAX)"] = {\n", 
+        prefix.lower, prefix.lower
+    );
     for(flagc_t i = 0; i < FLAGSHORT_MAX; i++){
         shortn = flags->shortname_record[i];
         if(shortn != 0){
@@ -126,11 +218,14 @@ static void compile_gonf_flags_by_short(struct flagspec *flags, FILE *outfile_ha
  *  {0, "sample", gonf_flags_by_long},
  * };
  */
-static void compile_gonf_flags_by_long(struct flagspec *flags, FILE *outfile_handle){
+static void compile_flags_by_long(struct flagspec *flags, FILE *outfile_handle, struct prefix_string prefix){
     struct flaginfo flag;
     flagc_t longc, long_last;
 
-    fputs("static struct gonf_matchlist gonf_flags_by_long[GONFLAGC] = {\n", outfile_handle);
+    fprintf(outfile_handle,
+        "static struct %s_matchlist %s_flags_by_long[%sLAGC] = {\n", 
+        prefix.lower, prefix.lower, prefix.upper
+    );
 
     longc = 0;
     long_last = flags->longname_record->len;
@@ -140,17 +235,19 @@ static void compile_gonf_flags_by_long(struct flagspec *flags, FILE *outfile_han
             longc++;
             if(longc == long_last){
                 fprintf(outfile_handle, 
-                    "\t{%d, \"%s\", gonf_flags_by_long},\n"
+                    "\t{%d, \"%s\", %s_flags_by_long},\n"
                     "};\n\n",
                     flagi,
-                    flag.longname
+                    flag.longname,
+                    prefix.lower
                 );
                 break;
             }else
                 fprintf(outfile_handle, 
-                    "\t{%d, \"%s\", gonf_flags_by_long + %d},\n", 
+                    "\t{%d, \"%s\", %s_flags_by_long + %d},\n",
                     flagi,
                     flag.longname,
+                    prefix.lower,
                     longc
                 );
         }
@@ -158,44 +255,49 @@ static void compile_gonf_flags_by_long(struct flagspec *flags, FILE *outfile_han
 }
 
 /* Compile the flagspec into a C library header in outfile. */
-static void compile_header(struct flagspec *flags, struct file outfile){
-    /* write header */
-    compile_info_header(outfile.handle);
-    fwrite(gonf_head_h_dump, 1, gonf_head_h_dump_len, outfile.handle);
+static void compile_header(struct flagspec *flags, FILE *outfile_handle, struct prefix_string prefix){
+    gonfsize_t template_pos;
 
-    compile_gonflagc(flagspec_len(flags), outfile.handle);
-    compile_gonf_identifiers(flags, outfile.handle);
+    /* write header */
+    compile_info_header(outfile_handle);
+    template_pos = compile_template(gonf_h_template, gonf_h_template_len, outfile_handle, prefix);
+
+    compile_flagc(flagspec_len(flags), outfile_handle, prefix);
+    compile_identifiers(flags, outfile_handle, prefix);
 
     /* write tail */
-    fwrite(gonf_tail_h_dump, 1, gonf_tail_h_dump_len, outfile.handle);
+    compile_template(gonf_h_template + template_pos , gonf_h_template_len - template_pos, outfile_handle, prefix);
 }
 
 /* Compile the flagspec into a C library in outfile */
-static void compile_library(struct flagspec *flags, struct file outfile){
-    /* write header */
-    compile_info_header(outfile.handle);
-    fwrite(gonf_head_c_dump, 1, gonf_head_c_dump_len, outfile.handle);
+static void compile_library(struct flagspec *flags, FILE *outfile_handle, struct prefix_string prefix){
+    gonfsize_t template_pos;
 
-    compile_gonflagc(flagspec_len(flags), outfile.handle);
-    compile_gonf_identifiers(flags, outfile.handle);
-    compile_gonf_flags(flags, outfile.handle);
-    compile_gonf_flags_by_short(flags, outfile.handle);
-    compile_gonf_flags_by_long(flags, outfile.handle);
+    /* write header */
+    compile_info_header(outfile_handle);
+    template_pos  = compile_template(gonf_c_template, gonf_c_template_len, outfile_handle, prefix);
+
+    compile_flagc(flagspec_len(flags), outfile_handle, prefix);
+    compile_identifiers(flags, outfile_handle, prefix);
+    compile_flags(flags, outfile_handle, prefix);
+    compile_flags_by_short(flags, outfile_handle, prefix);
+    compile_flags_by_long(flags, outfile_handle, prefix);
 
     /* write tail */
-    fwrite(gonf_tail_c_dump, 1, gonf_tail_c_dump_len, outfile.handle);
+    compile_template(gonf_c_template + template_pos, gonf_c_template_len - template_pos, outfile_handle, prefix);
 }
 
-int compilegonf(struct filearr *infiles, struct file outfile, struct file header_outfile){
+int compilegonf(struct filearr *infiles, struct file outfile, struct file header_outfile, char *prefix){
     struct flagspec *flags;
+    struct prefix_string *prefix_str;
     int ret;
     
     flags = flagspec_new();
     if(flags == NULL)
         return ERR_NOMEM;
 
+    /* parse input */
     ret = parsegonf(infiles, flags);
-
     if(ret != OK){
         flagspec_free(flags);
         return ret;
@@ -211,23 +313,26 @@ int compilegonf(struct filearr *infiles, struct file outfile, struct file header
         return ERR_FILE;
     }
 
-    compile_library(flags, outfile);
-    
-    if(file_error_check(outfile) == ERR_FILE){
+    /* init prefix convenience struct */
+    prefix_str = prefix_string_new(prefix);
+    if(prefix_str == NULL){
         flagspec_free(flags);
-        return ERR_FILE;
+        return ERR_NOMEM;
     }
 
-    if(header_outfile.handle != NULL){
-        compile_header(flags, header_outfile);
+    /* compile stuff */
+    compile_library(flags, outfile.handle, *prefix_str);
+    if(file_error_check(outfile) == ERR_FILE)
+        ret = ERR_FILE;
 
-        if(file_error_check(header_outfile) == ERR_FILE){
-            flagspec_free(flags);
-            return ERR_FILE;
-        }
+    if(header_outfile.handle != NULL){
+        compile_header(flags, header_outfile.handle, *prefix_str);
+        if(file_error_check(header_outfile) == ERR_FILE)
+            ret = ERR_FILE;
     }
 
     flagspec_free(flags);
-    return OK;
+    prefix_string_free(prefix_str);
+    return ret;
 }
         

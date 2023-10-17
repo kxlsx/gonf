@@ -20,7 +20,7 @@
 #define GONFSHORT_NONE '\0'
 
 typedef int gonfc_t;
-#define GONFLAGC 6
+#define GONFLAGC 7
 
 #define GONFLAG_INDEX(IDENTIFIER) GONFLAG_##IDENTIFIER
 #define GONFLAG_LICENSE 0
@@ -29,6 +29,7 @@ typedef int gonfc_t;
 #define GONFLAG_STDOUT 3
 #define GONFLAG_OUTPUT 4
 #define GONFLAG_HEADER 5
+#define GONFLAG_PREFIX 6
 
 /* Structure containing the data
  * associated with a flag.

@@ -15,3 +15,8 @@ HEADER:
     -H --header-file 
     "create a C header file in addition to the parser."
     = "gonf.h";
+
+PREFIX:
+    -p --prefix
+    "specify a prefix to use instead of \"gonf\"."
+    =;

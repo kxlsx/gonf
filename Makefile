@@ -55,7 +55,7 @@ LIB_DIRS     :=
 LIBS         :=
 MAN_DIR      := man
 
-HEXDUMP_NAME := gonf_dump.c
+HEXDUMP_NAME := gonf_template.c
 LEXYY_NAME   := lex.yy.c
 
 EXEC_NAME := gonf

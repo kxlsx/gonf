@@ -16,9 +16,6 @@ typedef int gonfsize_t;
 #define ERR_NOFLAGS 4
 #define ERR_CLI     5
 
-#define DEFAULT_OUTFILE \
-    "gonf.c"
-
 #define NAME \
     "gonf"
 #define VERSION \
@@ -31,6 +28,11 @@ typedef int gonfsize_t;
     "This is free software. You may redistribute copies of it under the terms of\n" \
     "the GNU General Public License <https://www.gnu.org/licenses/gpl.html>.\n"     \
     "There is NO WARRANTY, to the extent permitted by law."
+
+#define DEFAULT_OUTFILE \
+    "gonf.c"
+#define DEFAULT_PREFIX \
+    "gonf"
 
 /* stringize macro result */
 #define XSTR(S) STR(S)

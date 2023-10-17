@@ -32,7 +32,7 @@ struct gonf_matchlist{
     const char *const match;
     struct gonf_matchlist *next;
 };
-#define GONFLAGC 6
+#define GONFLAGC 7
 
 #define GONFLAG_INDEX(IDENTIFIER) GONFLAG_##IDENTIFIER
 #define GONFLAG_LICENSE 0
@@ -41,6 +41,7 @@ struct gonf_matchlist{
 #define GONFLAG_STDOUT 3
 #define GONFLAG_OUTPUT 4
 #define GONFLAG_HEADER 5
+#define GONFLAG_PREFIX 6
 static struct gonflag gonf_flags[GONFLAGC] = {
 	{NULL, NULL, "print license information.", "license", 0, 'L', false},
 	{NULL, NULL, "print version.", "version", 0, 'V', false},
@@ -48,6 +49,7 @@ static struct gonflag gonf_flags[GONFLAGC] = {
 	{NULL, NULL, "write parser to stdout.", "stdout", 0, 't', false},
 	{NULL, NULL, "specify output filename.", "output", 0, 'o', true},
 	{"gonf.h", NULL, "create a C header file in addition to the parser.", "header-file", 0, 'H', true},
+	{"gonf", NULL, "specify the generated lib's prefix", "prefix", 0, 'p', true},
 };
 
 static const gonfc_t gonf_flags_by_short[94] = {
@@ -56,6 +58,7 @@ static const gonfc_t gonf_flags_by_short[94] = {
 	[53] = 2,
 	[71] = 3,
 	[78] = 5,
+	[79] = 7,
 	[83] = 4,
 };
 
@@ -65,7 +68,8 @@ static struct gonf_matchlist gonf_flags_by_long[GONFLAGC] = {
 	{2, "help", gonf_flags_by_long + 3},
 	{3, "stdout", gonf_flags_by_long + 4},
 	{4, "output", gonf_flags_by_long + 5},
-	{5, "header-file", gonf_flags_by_long},
+	{5, "header-file", gonf_flags_by_long + 6},
+	{6, "prefix", gonf_flags_by_long},
 };
 
 #define eprintf(FMT, ...) fprintf(stderr, FMT, ## __VA_ARGS__)

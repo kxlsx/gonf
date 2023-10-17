@@ -1,3 +1,4 @@
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -18,6 +19,9 @@
 #define PRINT_ERR_CLI { \
     eprintf_gonf(); \
     gonferror_print(); \
+}
+#define PRINT_ERR_PREFIX($PREFIX) { \
+    eprintf_gonf("prefix '%s' is not a valid identifier.\n", $PREFIX); \
 }
 
 static void print_help(void){
@@ -74,6 +78,19 @@ static void print_version(void){
         NAME " v" VERSION
     );
 }
+
+static bool is_valid_prefix(char *prefix){
+    if(isdigit(*prefix))
+        return false;
+    while(*prefix != '\0'){
+        if(*prefix != '_'
+        && !isalnum(*prefix))
+            return false;
+        prefix++;
+    }
+    return true;
+}
+
 
 static int set_infiles(struct filearr **infiles, char **args){
     gonfc_t args_count;
@@ -142,6 +159,7 @@ int process_args(int argc, char **argv){
     struct filearr *infiles;
     struct file outfile = {0};
     struct file header_outfile = {0};
+    char *prefix;
     int ret;
 
     args_stor = gonfparse(argc, argv);
@@ -174,6 +192,18 @@ int process_args(int argc, char **argv){
         return OK;
     }
 
+    /* args setup */
+    prefix = DEFAULT_PREFIX;
+    if(gonflag_is_present(GONFLAG_PREFIX)){
+        prefix = gonflag_get_value(GONFLAG_PREFIX);
+        if(!is_valid_prefix(prefix)){
+            PRINT_ERR_PREFIX(prefix);
+
+            free(args_stor);
+            return ERR_CLI;
+        }
+    }
+
     ret = set_infiles(&infiles, args);
     if(ret != OK){
         free(args_stor);
@@ -198,8 +228,9 @@ int process_args(int argc, char **argv){
         }
     }
 
-    ret = compilegonf(infiles, outfile, header_outfile);
-
+    /* compile stuff  */
+    ret = compilegonf(infiles, outfile, header_outfile, prefix);
+    
     switch(ret){
     case ERR_NOMEM:
         PRINT_ERR_NOMEM;
