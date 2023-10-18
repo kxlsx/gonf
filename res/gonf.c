@@ -161,10 +161,9 @@ static struct $plag *$p_parse_short(char *shortflags){
                 return NULL;
             }
         }else if(flag->is_value
-        && *shortflags != '\0'
-        && flag->default_value == NULL){
-            $p_err_set($PERR_NOVAL, shortflags - 1, 1);
-            return NULL;
+        && *shortflags != '\0'){
+            flag->value = shortflags;
+            return flag;
         }
     }while(*shortflags != '\0');
     return flag;
@@ -172,34 +171,50 @@ static struct $plag *$p_parse_short(char *shortflags){
 
 static struct $plag *$p_parse_long(char *longflag){
     struct $plag *flag;
-    char *value;
+    char *longflag_buf;
+    $psize_t i;
 
     if(*longflag == '='){
         $p_err_set($PERR_NOFLAG, "--", 2);
         return NULL;
     }
 
-    value = strchr(longflag, '=');
-    if(value != NULL){
-        *value = '\0';
-        value++;
-    }
-
-    flag = $plag_get_by_long(longflag);
-    if(flag == NULL){
-        $p_err_set($PERR_UNKNFLAG, longflag, strlen(longflag));
+    longflag_buf = malloc(strlen(longflag) + 1);
+    if(longflag_buf == NULL){
+        $p_err_set($PERR_NOMEM, NULL, 0);
         return NULL;
     }
-    flag->count++;
 
-    if(value != NULL){
-        if(!flag->is_value){
-            $p_err_set($PERR_NOTVALFLAG, longflag, strlen(longflag));
+    flag = NULL;
+    i = 0;
+    do{
+        if(longflag[i] == '\0'){
+            $p_err_set($PERR_UNKNFLAG, longflag, strlen(longflag));
+            free(longflag_buf);
             return NULL;
         }
-        flag->value = value;
+
+        longflag_buf[i] = longflag[i];
+        i++;
+        longflag_buf[i] = '\0';
+
+        flag = $plag_get_by_long(longflag_buf);
+    }while(flag == NULL);
+    flag->count++;
+
+    if(longflag[i] != '\0'){
+        if(flag->is_value){
+            if(longflag[i] == '=') i++;
+
+            flag->value =longflag + i;
+        }else{
+            $p_err_set($PERR_NOTVALFLAG, flag->longname, strlen(flag->longname));
+            free(longflag_buf);
+            return NULL;
+        }
     }
 
+    free(longflag_buf);
     return flag;
 }
 

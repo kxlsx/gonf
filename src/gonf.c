@@ -49,7 +49,7 @@ static struct gonflag gonf_flags[GONFLAGC] = {
 	{NULL, NULL, "write parser to stdout.", "stdout", 0, 't', false},
 	{NULL, NULL, "specify output filename.", "output", 0, 'o', true},
 	{"gonf.h", NULL, "create a C header file in addition to the parser.", "header-file", 0, 'H', true},
-	{"gonf", NULL, "specify the generated lib's prefix", "prefix", 0, 'p', true},
+	{NULL, NULL, "specify a prefix to use instead of \"gonf\".", "prefix", 0, 'p', true},
 };
 
 static const gonfc_t gonf_flags_by_short[94] = {
@@ -71,6 +71,7 @@ static struct gonf_matchlist gonf_flags_by_long[GONFLAGC] = {
 	{5, "header-file", gonf_flags_by_long + 6},
 	{6, "prefix", gonf_flags_by_long},
 };
+
 
 #define eprintf(FMT, ...) fprintf(stderr, FMT, ## __VA_ARGS__)
 
@@ -203,10 +204,9 @@ static struct gonflag *gonf_parse_short(char *shortflags){
                 return NULL;
             }
         }else if(flag->is_value
-        && *shortflags != '\0'
-        && flag->default_value == NULL){
-            gonf_err_set(GONFERR_NOVAL, shortflags - 1, 1);
-            return NULL;
+        && *shortflags != '\0'){
+            flag->value = shortflags;
+            return flag;
         }
     }while(*shortflags != '\0');
     return flag;
@@ -214,34 +214,50 @@ static struct gonflag *gonf_parse_short(char *shortflags){
 
 static struct gonflag *gonf_parse_long(char *longflag){
     struct gonflag *flag;
-    char *value;
+    char *longflag_buf;
+    gonfsize_t i;
 
     if(*longflag == '='){
         gonf_err_set(GONFERR_NOFLAG, "--", 2);
         return NULL;
     }
 
-    value = strchr(longflag, '=');
-    if(value != NULL){
-        *value = '\0';
-        value++;
-    }
-
-    flag = gonflag_get_by_long(longflag);
-    if(flag == NULL){
-        gonf_err_set(GONFERR_UNKNFLAG, longflag, strlen(longflag));
+    longflag_buf = malloc(strlen(longflag) + 1);
+    if(longflag_buf == NULL){
+        gonf_err_set(GONFERR_NOMEM, NULL, 0);
         return NULL;
     }
-    flag->count++;
 
-    if(value != NULL){
-        if(!flag->is_value){
-            gonf_err_set(GONFERR_NOTVALFLAG, longflag, strlen(longflag));
+    flag = NULL;
+    i = 0;
+    do{
+        if(longflag[i] == '\0'){
+            gonf_err_set(GONFERR_UNKNFLAG, longflag, strlen(longflag));
+            free(longflag_buf);
             return NULL;
         }
-        flag->value = value;
+
+        longflag_buf[i] = longflag[i];
+        i++;
+        longflag_buf[i] = '\0';
+
+        flag = gonflag_get_by_long(longflag_buf);
+    }while(flag == NULL);
+    flag->count++;
+
+    if(longflag[i] != '\0'){
+        if(flag->is_value){
+            if(longflag[i] == '=') i++;
+
+            flag->value =longflag + i;
+        }else{
+            gonf_err_set(GONFERR_NOTVALFLAG, flag->longname, strlen(flag->longname));
+            free(longflag_buf);
+            return NULL;
+        }
     }
 
+    free(longflag_buf);
     return flag;
 }
 
