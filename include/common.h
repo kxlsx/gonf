@@ -19,7 +19,7 @@ typedef int gonfsize_t;
 #define NAME \
     "gonf"
 #define VERSION \
-    "1.0.0"
+    "1.0.1"
 #define DESCRIPTION \
     "Generate programs that parse command-line options."
 #define AUTHORS \

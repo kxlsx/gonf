@@ -197,6 +197,10 @@ static struct gonflag *gonf_parse_short(char *shortflags){
         shortflags++;
         if(*shortflags == '='){
             if(flag->is_value){
+                if(*(shortflags + 1) == '\0') {
+                    gonf_err_set(GONFERR_NOVAL, shortflags - 1, 1);
+                    return NULL;
+                }
                 flag->value = shortflags + 1;
                 return flag;
             }else{
@@ -247,9 +251,16 @@ static struct gonflag *gonf_parse_long(char *longflag){
 
     if(longflag[i] != '\0'){
         if(flag->is_value){
-            if(longflag[i] == '=') i++;
+            if(longflag[i] == '=') {
+                i++;
+                if(longflag[i] == '\0') {
+                    gonf_err_set(GONFERR_NOVAL, longflag, strlen(longflag) - 1);
+                    free(longflag_buf);
+                    return NULL;
+                }
+            }
 
-            flag->value =longflag + i;
+            flag->value = longflag + i;
         }else{
             gonf_err_set(GONFERR_NOTVALFLAG, flag->longname, strlen(flag->longname));
             free(longflag_buf);
